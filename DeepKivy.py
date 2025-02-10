@@ -7,8 +7,22 @@ from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.vkeyboard import VKeyboard
+from kivy.metrics import dp
 
 Builder.load_string('''
+<RoundedButton@Button>:
+    background_normal: ''
+    background_color: (0.1, 0.5, 0.8, 1)
+    size_hint: None, None
+    size: dp(120), dp(40)
+    canvas.before:
+        Color:
+            rgba: self.background_color
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [10,]
+                    
 <WelcomeScreen>:
     BoxLayout:
         orientation: 'vertical'
@@ -22,7 +36,7 @@ Builder.load_string('''
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: '40sp'
+            height: dp(40)
             spacing: 5
             
             TextInput:
@@ -33,7 +47,7 @@ Builder.load_string('''
                 write_tab: False
                 on_focus: root.toggle_keyboard()
                 
-            Button:
+            RoundedButton:
                 text: 'Why username?'
                 size_hint_x: 0.3
                 on_press: root.manager.current = 'username_explanation'
@@ -44,26 +58,16 @@ Builder.load_string('''
             password: True
             multiline: False
             size_hint_y: None
-            height: '40sp'
+            height: dp(40)
             write_tab: False
             on_focus: root.toggle_keyboard()
         
-        Button:
-            text: 'Show Keyboard'
-            size_hint_y: None
-            height: '40sp'
-            on_press: root.toggle_keyboard()
-        
-        Button:
+        RoundedButton:
             text: 'Know more about login'
-            size_hint_y: None
-            height: '40sp'
             on_press: root.manager.current = 'login_info'
         
-        Button:
+        RoundedButton:
             text: 'Submit'
-            size_hint_y: None
-            height: '40sp'
             on_press: root.check_password()
 
         Widget:
@@ -186,12 +190,12 @@ Builder.load_string('''
             hint_text: 'Name (required)'
             multiline: False
             size_hint_y: None
-            height: '40sp'
+            height: dp(40)
             
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
-            height: '40sp'
+            height: dp(40)
             spacing: 10
             
             TextInput:
@@ -200,15 +204,44 @@ Builder.load_string('''
                 multiline: False
                 size_hint_x: 0.8
                 
-            Button:
+            RoundedButton:
                 text: 'Know More'
                 size_hint_x: 0.2
                 on_press: root.manager.current = 'additional_info'
         
-        Button:
-            text: 'Save Changes'
+        Label:
+            text: 'Choose customization'
             size_hint_y: None
-            height: '40sp'
+            height: dp(30)
+        
+        GridLayout:
+            cols: 2
+            rows: 4
+            size_hint_y: None
+            height: dp(80)
+            
+            CheckBox:
+                id: check1
+            Label:
+                text: 'Option 1'
+            
+            CheckBox:
+                id: check2
+            Label:
+                text: 'Option 2'
+            
+            CheckBox:
+                id: check3
+            Label:
+                text: 'Option 3'
+            
+            CheckBox:
+                id: check4
+            Label:
+                text: 'Option 4'
+        
+        RoundedButton:
+            text: 'Save Changes'
             on_press: root.save_item()                    
 
 <AddItemScreen>:
@@ -342,11 +375,8 @@ class WelcomeScreen(Screen):
     keyboard = None
     
     def check_password(self):
-        # Store credentials in global variables
         GlobalVars.username = self.ids.username_input.text
         GlobalVars.password = self.ids.password_input.text
-        
-        # Clear input fields
         self.ids.username_input.text = ''
         self.ids.password_input.text = ''
         
@@ -361,19 +391,55 @@ class WelcomeScreen(Screen):
         else:
             self.keyboard = VKeyboard(
                 size_hint_y=None,
-                height=300,
+                height=dp(300),
                 layout='qwerty'
             )
             self.keyboard.bind(on_key_up=self.on_keyboard_input)
-            self.ids.keyboard_placeholder.height = 300
+            self.ids.keyboard_placeholder.height = dp(300)
             self.add_widget(self.keyboard)
     
-    def on_keyboard_input(self, keyboard, key):
+    def on_keyboard_input(self, keyboard, key, *args):
         if self.ids.username_input.focus:
             self.ids.username_input.text += key
         elif self.ids.password_input.focus:
             self.ids.password_input.text += key
 
+    def on_keyboard_input(self, keyboard, key, *args):
+        # Handle special keys
+        if key == 'backspace':
+            self.handle_backspace()
+        elif key == 'enter':
+            self.handle_enter()
+        elif key == 'spacebar':
+            self.handle_space()
+        elif key in ['tab', 'shift', 'capslock', 'layout', 'escape']:
+            # Ignore these keys
+            return
+        else:
+            # Handle regular keys
+            self.handle_regular_key(key)
+    
+    def handle_backspace(self):
+        if self.ids.username_input.focus:
+            self.ids.username_input.text = self.ids.username_input.text[:-1]
+        elif self.ids.password_input.focus:
+            self.ids.password_input.text = self.ids.password_input.text[:-1]
+    
+    def handle_enter(self):
+        # Simulate pressing the Submit button
+        self.check_password()
+    
+    def handle_space(self):
+        if self.ids.username_input.focus:
+            self.ids.username_input.text += ' '
+        elif self.ids.password_input.focus:
+            self.ids.password_input.text += ' '
+    
+    def handle_regular_key(self, key):
+        if self.ids.username_input.focus:
+            self.ids.username_input.text += key
+        elif self.ids.password_input.focus:
+            self.ids.password_input.text += key
 
 class UsernameExplanationScreen(Screen):
     pass
@@ -389,6 +455,13 @@ class ListScreen(Screen):
         ]
 
 class AddItemScreen(Screen):
+    def on_enter(self):
+        # Reset checkboxes to True when the screen is opened
+        self.ids.check1.active = True
+        self.ids.check2.active = True
+        self.ids.check3.active = True
+        self.ids.check4.active = True
+
     def add_item(self):
         name = self.ids.name_input.text.strip()
         if not name:
@@ -402,33 +475,53 @@ class AddItemScreen(Screen):
             self.ids.check4.active
         ]
         
-        print(f"Added item with options: {checks}")
-        App.get_running_app().items.append({'name': name, 'email': email})
+        # Add new item with checks
+        App.get_running_app().items.append({
+            'name': name,
+            'email': email,
+            'checks': checks
+        })
         
-        # Clear input fields after adding
+        # Clear input fields
         self.ids.name_input.text = ''
         self.ids.email_input.text = ''
         self.manager.current = 'list'
 
 class EditItemScreen(Screen):
     edit_index = NumericProperty(-1)
-
+    
     def on_enter(self):
-        if self.edit_index >= 0:
-            item = App.get_running_app().items[self.edit_index]
+        app = App.get_running_app()
+        if 0 <= self.edit_index < len(app.items):
+            item = app.items[self.edit_index]
             self.ids.name_input.text = item['name']
             self.ids.email_input.text = item.get('email', '')
-
+            
+            # Set checkbox states
+            for i in range(4):
+                self.ids[f'check{i+1}'].active = item.get('checks', [True, True, True, True])[i]
+    
     def save_item(self):
         name = self.ids.name_input.text.strip()
         if not name:
             return
+        
         email = self.ids.email_input.text.strip()
+        checks = [
+            self.ids.check1.active,
+            self.ids.check2.active,
+            self.ids.check3.active,
+            self.ids.check4.active
+        ]
+        
         app = App.get_running_app()
         if 0 <= self.edit_index < len(app.items):
-            app.items[self.edit_index] = {'name': name, 'email': email}
+            app.items[self.edit_index] = {
+                'name': name,
+                'email': email,
+                'checks': checks
+            }
             self.manager.current = 'list'
-
 
 class AdditionalInfoScreen(Screen):
     pass
