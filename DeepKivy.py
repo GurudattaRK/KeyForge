@@ -175,6 +175,98 @@ Builder.load_string('''
         size_hint_x: 0.15
         on_press: app.delete_item(root.index)
 
+<AddItemScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 10
+        
+        Label:
+            text: 'Add New Item'
+            font_size: '20sp'
+            
+        TextInput:
+            id: name_input
+            hint_text: 'Name (required)'
+            multiline: False
+            size_hint_y: None
+            height: dp(40)
+            
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(40)
+            spacing: 10
+            
+            TextInput:
+                id: email_input
+                hint_text: 'Email (optional)'
+                multiline: False
+                size_hint_x: 0.8
+                
+            RoundedButton:
+                text: 'Know More'
+                size_hint_x: 0.2
+                on_press: root.manager.current = 'additional_info'
+        
+        Label:
+            text: 'Choose customization'
+            size_hint_y: None
+            height: dp(30)
+        
+        GridLayout:
+            cols: 2
+            rows: 4
+            size_hint_y: None
+            height: dp(80)
+            
+            CheckBox:
+                id: check1
+                active: True
+            Label:
+                text: 'Option 1'
+            
+            CheckBox:
+                id: check2
+                active: True
+            Label:
+                text: 'Option 2'
+            
+            CheckBox:
+                id: check3
+                active: True
+            Label:
+                text: 'Option 3'
+            
+            CheckBox:
+                id: check4
+                active: True
+            Label:
+                text: 'Option 4'
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(60)
+            spacing: 5
+            
+            Label:
+                text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+                size_hint_y: None
+                height: dp(20)
+                
+            Slider:
+                min: 1
+                max: 4
+                step: 1
+                value: 2
+                value_normalized: (self.value - self.min) / (self.max - self.min)
+                on_value: root.slider_value = int(self.value)
+        
+        RoundedButton:
+            text: 'Add Item'
+            on_press: root.add_item()
+
 <EditItemScreen>:
     BoxLayout:
         orientation: 'vertical'
@@ -240,84 +332,28 @@ Builder.load_string('''
             Label:
                 text: 'Option 4'
         
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            height: dp(60)
+            spacing: 5
+            
+            Label:
+                text: f'Priority Level: {root.slider_value}'
+                size_hint_y: None
+                height: dp(20)
+                
+            Slider:
+                min: 1
+                max: 4
+                step: 1
+                value: root.slider_value
+                value_normalized: (self.value - self.min) / (self.max - self.min)
+                on_value: root.slider_value = int(self.value)
+        
         RoundedButton:
             text: 'Save Changes'
-            on_press: root.save_item()                    
-
-<AddItemScreen>:
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 20
-        spacing: 10
-        
-        Label:
-            text: 'Add New Item'
-            font_size: '20sp'
-            
-        TextInput:
-            id: name_input
-            hint_text: 'Name (required)'
-            multiline: False
-            size_hint_y: None
-            height: '40sp'
-            
-        BoxLayout:
-            orientation: 'horizontal'
-            size_hint_y: None
-            height: '40sp'
-            spacing: 10
-            
-            TextInput:
-                id: email_input
-                hint_text: 'Email (optional)'
-                multiline: False
-                size_hint_x: 0.8
-                
-            Button:
-                text: 'Know More'
-                size_hint_x: 0.2
-                on_press: root.manager.current = 'additional_info'
-        
-        Label:
-            text: 'Choose customization'
-            size_hint_y: None
-            height: '30sp'
-        
-        GridLayout:
-            cols: 2
-            rows: 4
-            size_hint_y: None
-            height: '80sp'
-            
-            CheckBox:
-                active: True
-                id: check1
-            Label:
-                text: 'Option 1'
-            
-            CheckBox:
-                active: True
-                id: check2
-            Label:
-                text: 'Option 2'
-            
-            CheckBox:
-                active: True
-                id: check3
-            Label:
-                text: 'Option 3'
-            
-            CheckBox:
-                active: True
-                id: check4
-            Label:
-                text: 'Option 4'
-        
-        Button:
-            text: 'Add Item'
-            size_hint_y: None
-            height: '40sp'
-            on_press: root.add_item()
+            on_press: root.save_item()
 
 <AdditionalInfoScreen>:
     BoxLayout:
