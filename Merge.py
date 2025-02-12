@@ -8,6 +8,51 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.vkeyboard import VKeyboard
 from kivy.metrics import dp
+from argon2 import low_level, Type
+import base64
+
+
+def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
+    """
+        password: The password to hash
+        time_cost: Number of iterations
+        memory_cost: Memory usage in KiB
+        parallelism: Number of parallel threads
+        hash_length: Desired length of the hash in bytes
+    """
+    password_bytes = password.encode('utf-8')
+    Salt = Salt.encode('utf-8')
+    # Generate the hash using low-level function to specify fixed salt
+    hash_bytes = low_level.hash_secret(
+        secret=password_bytes,
+        salt=Salt,
+        time_cost=Time_Cost,
+        memory_cost=Memory_Cost,
+        parallelism=Parallelism,
+        hash_len=hash_length,
+        type=Type.I,  # Argon2i (data-independent)
+        version=19    # Latest Argon2 version
+    )
+    
+    # Decode the full hash string
+    hash_str = hash_bytes.decode('utf-8')
+    
+    # Extract the base64 hash value (last part after $)
+    base64_hash = hash_str.split('$')[-1]
+    
+    # Add padding if necessary
+    # Base64 strings should have a length that's a multiple of 4
+    missing_padding = len(base64_hash) % 4
+    if missing_padding:
+        base64_hash += '=' * (4 - missing_padding)
+    
+    # Convert base64 to bytes, then to hex
+    # Use urlsafe_b64decode since Argon2 uses URL-safe base64
+    hash_bytes = base64.urlsafe_b64decode(base64_hash)
+    hex_hash = hash_bytes.hex()
+    
+    return hex_hash
+
 
 Builder.load_string('''
 <RoundedButton@Button>:
@@ -432,6 +477,9 @@ class WelcomeScreen(Screen):
         
         if GlobalVars.password != "":
             self.manager.current = 'list'
+        
+        print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
+
     
     def toggle_keyboard(self):
         if self.keyboard:
@@ -515,6 +563,8 @@ class AddItemScreen(Screen):
         self.ids.check4.active = True
         self.slider_value = 2
         self.ids.slider.value = 2
+        self.ids.name_input.text = ''
+        self.ids.email_input.text = ''
 
     def add_item(self):
         name = self.ids.name_input.text.strip()
@@ -536,6 +586,8 @@ class AddItemScreen(Screen):
             'checks': checks,
             'slider_value': self.slider_value  # Store the slider value
         })
+
+        print(f"\nAdding:\nname:{name}\nemail:{email}\nchecks:{checks}\nslider:{self.slider_value}")
         
         # Clear input fields
         self.ids.name_input.text = ''
@@ -582,6 +634,8 @@ class EditItemScreen(Screen):
             }
             self.manager.current = 'list'
 
+        print(f"\nEditing:\nname:{name}\nemail:{email}\nchecks:{checks}\nslider:{self.slider_value}")
+
 class AdditionalInfoScreen(Screen):
     pass
 
@@ -590,6 +644,8 @@ class ResultScreen(Screen):
         text = self.ids.result_input.text
         Clipboard.put(text)
         Clock.schedule_once(lambda dt: self.clear_clipboard(), 5)
+        print(f"\nPlay result:\nname:{text}")
+
 
     def clear_clipboard(self):
         Clipboard.put('')
@@ -640,6 +696,13 @@ class InventoryApp(App):
             result_screen = self.root.get_screen('result')
             result_screen.ids.result_input.text = result
             self.root.current = 'result'
+            x = item['name']
+            y = item.get('email', '')
+            z = item['checks']
+            w = item['slider_value']
+            a = Argon2i_Hash(x,y,20,102400,1,16)
+            print(f"\nPlay:\nname:{x}\nemail:{y}\nchecks:{z}\nslider:{w}\nHash:{a}")
+
 
     def edit_item(self, index):
         if 0 <= index < len(self.items):
@@ -647,6 +710,7 @@ class InventoryApp(App):
             edit_screen.edit_index = index
             edit_screen.on_enter()
             self.root.current = 'edit_item'
+            
 
 if __name__ == '__main__':
     InventoryApp().run()
