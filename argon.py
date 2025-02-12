@@ -5,7 +5,7 @@ import base64
 # Fixed salt (16 bytes)
 FIXED_SALT = b'salt1234salt1234'
 
-def hash_password(password, time_cost, memory_cost, parallelism, hash_length):
+def Argon2i_Hash(password, Salt, time_cost, memory_cost, parallelism, hash_length):
     """
         password: The password to hash
         time_cost: Number of iterations
@@ -14,11 +14,12 @@ def hash_password(password, time_cost, memory_cost, parallelism, hash_length):
         hash_length: Desired length of the hash in bytes
     """
     password_bytes = password.encode('utf-8')
+    Salt = Salt.encode('utf-8')
     
     # Generate the hash using low-level function to specify fixed salt
     hash_bytes = low_level.hash_secret(
         secret=password_bytes,
-        salt=FIXED_SALT,
+        salt=Salt,
         time_cost=time_cost,
         memory_cost=memory_cost,
         parallelism=parallelism,
@@ -47,23 +48,24 @@ def hash_password(password, time_cost, memory_cost, parallelism, hash_length):
     return hash_str, hex_hash
 
 key = "bruh"
+salt = 'salt1234salt1234'
 start_time = time.time()
-example1_full, example1_hash = hash_password(key, 10, 1048576, 1, 16)
+example1_full, example1_hash = Argon2i_Hash(key,salt, 40, 102400, 1, 16)
 end_time = time.time()
 elapsed_time1 = end_time - start_time
 
 start_time = time.time()
-example2_full, example2_hash = hash_password(key, 10, 1048576, 1, 32)
+example2_full, example2_hash = Argon2i_Hash(key,salt, 40, 102400, 1, 32)
 end_time = time.time()
 elapsed_time2 = end_time - start_time
 
 start_time = time.time()
-example3_full, example3_hash = hash_password(key, 10, 1048576, 1, 64)
+example3_full, example3_hash = Argon2i_Hash(key,salt, 40, 102400, 1, 64)
 end_time = time.time()
 elapsed_time3 = end_time - start_time
 
 start_time = time.time()
-example4_full, example4_hash = hash_password(key, 10, 1048576, 1, 128)
+example4_full, example4_hash = Argon2i_Hash(key,salt, 40, 102400, 1, 128)
 end_time = time.time()
 elapsed_time4 = end_time - start_time
 

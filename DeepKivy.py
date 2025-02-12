@@ -256,6 +256,7 @@ Builder.load_string('''
                 height: dp(20)
                 
             Slider:
+                id: slider
                 min: 1
                 max: 4
                 step: 1
@@ -266,6 +267,12 @@ Builder.load_string('''
         RoundedButton:
             text: 'Add Item'
             on_press: root.add_item()
+                    
+        RoundedButton:
+            text: 'Back'
+            size_hint_y: None
+            height: '40sp'
+            on_press: root.manager.current = 'list'
 
 <EditItemScreen>:
     BoxLayout:
@@ -339,21 +346,28 @@ Builder.load_string('''
             spacing: 5
             
             Label:
-                text: f'Priority Level: {root.slider_value}'
+                text: f'Password Length: {2**(int(root.slider_value))*(8)}'
                 size_hint_y: None
                 height: dp(20)
                 
             Slider:
+                id: slider
                 min: 1
                 max: 4
                 step: 1
                 value: root.slider_value
                 value_normalized: (self.value - self.min) / (self.max - self.min)
                 on_value: root.slider_value = int(self.value)
-        
+
         RoundedButton:
             text: 'Save Changes'
             on_press: root.save_item()
+                    
+        RoundedButton:
+            text: 'Back'
+            size_hint_y: None
+            height: '40sp'
+            on_press: root.manager.current = 'list'
 
 <AdditionalInfoScreen>:
     BoxLayout:
@@ -491,12 +505,16 @@ class ListScreen(Screen):
         ]
 
 class AddItemScreen(Screen):
+    slider_value = NumericProperty(2)  # Add this line to define the property
+    
     def on_enter(self):
         # Reset checkboxes to True when the screen is opened
         self.ids.check1.active = True
         self.ids.check2.active = True
         self.ids.check3.active = True
         self.ids.check4.active = True
+        self.slider_value = 2
+        self.ids.slider.value = 2
 
     def add_item(self):
         name = self.ids.name_input.text.strip()
@@ -515,7 +533,8 @@ class AddItemScreen(Screen):
         App.get_running_app().items.append({
             'name': name,
             'email': email,
-            'checks': checks
+            'checks': checks,
+            'slider_value': self.slider_value  # Store the slider value
         })
         
         # Clear input fields
@@ -525,6 +544,7 @@ class AddItemScreen(Screen):
 
 class EditItemScreen(Screen):
     edit_index = NumericProperty(-1)
+    slider_value = NumericProperty(2)
     
     def on_enter(self):
         app = App.get_running_app()
@@ -536,6 +556,8 @@ class EditItemScreen(Screen):
             # Set checkbox states
             for i in range(4):
                 self.ids[f'check{i+1}'].active = item.get('checks', [True, True, True, True])[i]
+
+            self.slider_value = item.get('slider_value', 2)
     
     def save_item(self):
         name = self.ids.name_input.text.strip()
@@ -555,7 +577,8 @@ class EditItemScreen(Screen):
             app.items[self.edit_index] = {
                 'name': name,
                 'email': email,
-                'checks': checks
+                'checks': checks,
+                'slider_value': self.slider_value  # Save the slider value
             }
             self.manager.current = 'list'
 
