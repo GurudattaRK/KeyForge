@@ -53,6 +53,60 @@ def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_lengt
     
     return hex_hash
 
+CHAR_SETS = [
+    # Set 1: Alphanumeric (62 characters)
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "abcdefghijklmnopqrstuvwxyz",
+    "0123456789",
+    "!@#$%^&*()_+-=",
+    "[]\\{}|;',./<>? "
+]
+
+def generate_password(enable_sets, hex_input):
+    """
+    Generate a password using specified character sets and hexadecimal input
+    
+    Args:
+        enable_sets (list): List of 3 booleans indicating enabled character sets
+        hex_input (str|bytes): Hexadecimal string or bytes to use for password generation
+        
+    Returns:
+        str: Generated password
+    """
+    # Validate inputs
+    if not isinstance(enable_sets, (list, tuple)) or len(enable_sets) != 5:
+        raise ValueError("enable_sets must be a list of 3 booleans")
+        
+    allowed_sets = [CHAR_SETS[i] for i, enabled in enumerate(enable_sets) if enabled]
+    
+    if not allowed_sets:
+        raise ValueError("At least one character set must be enabled")
+    
+    # Convert hex input to bytes
+    if isinstance(hex_input, str):
+        hex_str = hex_input.strip().lower()
+        if len(hex_str) % 2 != 0:
+            raise ValueError("Hex string must have even length")
+        try:
+            data = bytes.fromhex(hex_str)
+        except ValueError:
+            raise ValueError("Invalid hexadecimal characters in input")
+    elif isinstance(hex_input, bytes):
+        data = hex_input
+    else:
+        raise TypeError("hex_input must be string or bytes")
+
+    password = []
+    for i, byte in enumerate(data):
+        # Determine which character set to use
+        set_index = i % len(allowed_sets)
+        current_set = allowed_sets[set_index]
+        
+        # Calculate character index using modulo operation
+        char_index = byte % len(current_set)
+        password.append(current_set[char_index])
+    
+    return ''.join(password)
 
 Builder.load_string('''
 <RoundedButton@Button>:
@@ -232,7 +286,7 @@ Builder.load_string('''
             
         TextInput:
             id: name_input
-            hint_text: 'Name (required)'
+            hint_text: 'App/Website name (required)'
             multiline: False
             size_hint_y: None
             height: dp(40)
@@ -245,7 +299,7 @@ Builder.load_string('''
             
             TextInput:
                 id: email_input
-                hint_text: 'Email (optional)'
+                hint_text: 'App/Website password (optional)'
                 multiline: False
                 size_hint_x: 0.8
                 
@@ -255,13 +309,13 @@ Builder.load_string('''
                 on_press: root.manager.current = 'additional_info'
         
         Label:
-            text: 'Choose customization'
+            text: 'Choose which characters do you want to include in your password:'
             size_hint_y: None
             height: dp(30)
         
         GridLayout:
             cols: 2
-            rows: 4
+            rows: 5
             size_hint_y: None
             height: dp(80)
             
@@ -269,25 +323,31 @@ Builder.load_string('''
                 id: check1
                 active: True
             Label:
-                text: 'Option 1'
+                text: 'Uppercase Alphabets (Capital letters)'
             
             CheckBox:
                 id: check2
                 active: True
             Label:
-                text: 'Option 2'
+                text: 'Lowercase Alphabets (Small letters)'
             
             CheckBox:
                 id: check3
                 active: True
             Label:
-                text: 'Option 3'
+                text: 'Numbers'
             
             CheckBox:
                 id: check4
                 active: True
             Label:
-                text: 'Option 4'
+                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
+            
+            CheckBox:
+                id: check5
+                active: True
+            Label:
+                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
         
         BoxLayout:
             orientation: 'vertical'
@@ -331,7 +391,7 @@ Builder.load_string('''
             
         TextInput:
             id: name_input
-            hint_text: 'Name (required)'
+            hint_text: 'App/Website name (required)'
             multiline: False
             size_hint_y: None
             height: dp(40)
@@ -344,7 +404,7 @@ Builder.load_string('''
             
             TextInput:
                 id: email_input
-                hint_text: 'Email (optional)'
+                hint_text: 'App/Website password (optional)'
                 multiline: False
                 size_hint_x: 0.8
                 
@@ -354,35 +414,46 @@ Builder.load_string('''
                 on_press: root.manager.current = 'additional_info'
         
         Label:
-            text: 'Choose customization'
+            text: 'Choose which characters do you want to include in your password:'
             size_hint_y: None
             height: dp(30)
         
         GridLayout:
             cols: 2
-            rows: 4
+            rows: 5
             size_hint_y: None
             height: dp(80)
             
             CheckBox:
                 id: check1
+                active: True
             Label:
-                text: 'Option 1'
+                text: 'Uppercase Alphabets (Capital letters)'
             
             CheckBox:
                 id: check2
+                active: True
             Label:
-                text: 'Option 2'
+                text: 'Lowercase Alphabets (Small letters)'
             
             CheckBox:
                 id: check3
+                active: True
             Label:
-                text: 'Option 3'
+                text: 'Numbers'
             
             CheckBox:
                 id: check4
+                active: True
             Label:
-                text: 'Option 4'
+                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
+            
+            CheckBox:
+                id: check5
+                active: True
+            Label:
+                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
+
         
         BoxLayout:
             orientation: 'vertical'
@@ -439,6 +510,11 @@ Builder.load_string('''
         orientation: 'vertical'
         padding: 20
         spacing: 10
+                    
+        Label:
+            id: result_message
+            text: 'Generating password....'
+            font_size: '20sp'
         
         TextInput:
             id: result_input
@@ -479,6 +555,10 @@ class WelcomeScreen(Screen):
             self.manager.current = 'list'
         
         print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
+        if len(GlobalVars.username) < 8:
+            GlobalVars.username = Argon2i_Hash(GlobalVars.username,"H4!?|](hb)",4,10,1,16)
+            print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
+
 
     
     def toggle_keyboard(self):
@@ -561,6 +641,7 @@ class AddItemScreen(Screen):
         self.ids.check2.active = True
         self.ids.check3.active = True
         self.ids.check4.active = True
+        self.ids.check5.active = True
         self.slider_value = 2
         self.ids.slider.value = 2
         self.ids.name_input.text = ''
@@ -576,7 +657,8 @@ class AddItemScreen(Screen):
             self.ids.check1.active,
             self.ids.check2.active,
             self.ids.check3.active,
-            self.ids.check4.active
+            self.ids.check4.active,
+            self.ids.check5.active
         ]
         
         # Add new item with checks
@@ -606,8 +688,8 @@ class EditItemScreen(Screen):
             self.ids.email_input.text = item.get('email', '')
             
             # Set checkbox states
-            for i in range(4):
-                self.ids[f'check{i+1}'].active = item.get('checks', [True, True, True, True])[i]
+            for i in range(5):
+                self.ids[f'check{i+1}'].active = item.get('checks', [True, True, True, True, True])[i]
 
             self.slider_value = item.get('slider_value', 2)
     
@@ -621,7 +703,8 @@ class EditItemScreen(Screen):
             self.ids.check1.active,
             self.ids.check2.active,
             self.ids.check3.active,
-            self.ids.check4.active
+            self.ids.check4.active,
+            self.ids.check5.active
         ]
         
         app = App.get_running_app()
@@ -642,13 +725,19 @@ class AdditionalInfoScreen(Screen):
 class ResultScreen(Screen):
     def copy_to_clipboard(self):
         text = self.ids.result_input.text
+        result_screen = self.manager.get_screen('result')
+        result_screen.ids.result_message.text = f"Password Copied\nIt will be deleted & clipboard will be cleared in 10 seconds!"
+
         Clipboard.put(text)
-        Clock.schedule_once(lambda dt: self.clear_clipboard(), 5)
+        Clock.schedule_once(lambda dt: self.clear_clipboard(), 10)
         print(f"\nPlay result:\nname:{text}")
 
 
     def clear_clipboard(self):
         Clipboard.put('')
+        result_screen = self.manager.get_screen('result')
+        result_screen.ids.result_message.text = f"Copied password is deleted & Clipboard cleared"
+        print("\nclipboard data:",Clipboard.get())
         print("Clipboard content erased after 5 seconds")
 
 class ItemRow(RecycleDataViewBehavior, BoxLayout):
@@ -690,19 +779,39 @@ class InventoryApp(App):
             self.root.get_screen('list').on_enter()
 
     def play_item(self, index):
+        # Switch to the ResultScreen first
+        self.root.current = 'result'
+        
+        # Schedule the processing to start after the screen transition
+        Clock.schedule_once(lambda dt: self.process_item(index), 0.75)
+
+    def process_item(self, index):
         if 0 <= index < len(self.items):
             item = self.items[index]
-            result = f"{item['name']}{item.get('email', '')}"
             result_screen = self.root.get_screen('result')
-            result_screen.ids.result_input.text = result
-            self.root.current = 'result'
-            x = item['name']
-            y = item.get('email', '')
-            z = item['checks']
+            
+            App_name = item['name']
+            App_password = item.get('email', '')
+            character_set = item['checks']
             w = item['slider_value']
-            a = Argon2i_Hash(x,y,20,102400,1,16)
-            print(f"\nPlay:\nname:{x}\nemail:{y}\nchecks:{z}\nslider:{w}\nHash:{a}")
+            hash_len = (2**w)*8
 
+            if len(App_password)< 4:
+                App_password = "HardC0d3d 541t"
+            
+            master_hash = Argon2i_Hash(GlobalVars.password,GlobalVars.username,20,102400,1,64)
+
+            App_hash = Argon2i_Hash(App_name,App_password,20,102400,1,64)
+
+            app_master_hash = Argon2i_Hash(master_hash,App_hash,20,102400,1,hash_len)
+
+            App_key= generate_password(character_set,app_master_hash)
+
+            print(f"\nPlay:\nname:{App_name}\nemail:{App_password}\nchecks:{character_set}\nslider:{w}\nHash length:{hash_len}\nHash:{app_master_hash}\nApp password:{App_key}")
+
+            result_screen.ids.result_input.text = App_key
+            
+            result_screen.ids.result_message.text = f"Password generated for {item['name']}"
 
     def edit_item(self, index):
         if 0 <= index < len(self.items):

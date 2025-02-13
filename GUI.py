@@ -8,6 +8,7 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.vkeyboard import VKeyboard
 from kivy.metrics import dp
+import time
 
 Builder.load_string('''
 <RoundedButton@Button>:
@@ -394,6 +395,11 @@ Builder.load_string('''
         orientation: 'vertical'
         padding: 20
         spacing: 10
+    
+        Label:
+            id: result_message
+            text: 'Generating password....'
+            font_size: '20sp'
         
         TextInput:
             id: result_input
@@ -645,16 +651,24 @@ class InventoryApp(App):
             self.root.get_screen('list').on_enter()
 
     def play_item(self, index):
+            # Switch to the ResultScreen first
+            self.root.current = 'result'
+            
+            # Schedule the processing to start after the screen transition
+            Clock.schedule_once(lambda dt: self.process_item(index), 0.75)
+
+    def process_item(self, index):
         if 0 <= index < len(self.items):
             item = self.items[index]
-            result = f"{item['name']}{item.get('email', '')}"
             result_screen = self.root.get_screen('result')
+            
+            # Simulate processing (replace this with your actual processing logic)
+            result = f"{item['name']}{item.get('email', '')}"
+            
+            # Update the result input field
             result_screen.ids.result_input.text = result
-            self.root.current = 'result'
-            x = item['name']
-            y = item.get('email', '')
-            print(f"\nPlay:\nname:{x}\nemail:{y}")
-
+            
+            result_screen.ids.result_message.text = f"Password generated for {item['name']}"
 
     def edit_item(self, index):
         if 0 <= index < len(self.items):
