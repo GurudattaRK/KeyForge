@@ -7,6 +7,8 @@ from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.vkeyboard import VKeyboard
+from kivy.uix.button import ButtonBehavior
+from kivy.uix.label import Label
 from kivy.metrics import dp
 from argon2 import low_level, Type
 import base64
@@ -40,13 +42,10 @@ def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_lengt
     # Extract the base64 hash value (last part after $)
     base64_hash = hash_str.split('$')[-1]
     
-    # Add padding if necessary
-    # Base64 strings should have a length that's a multiple of 4
     missing_padding = len(base64_hash) % 4
     if missing_padding:
         base64_hash += '=' * (4 - missing_padding)
     
-    # Convert base64 to bytes, then to hex
     # Use urlsafe_b64decode since Argon2 uses URL-safe base64
     hash_bytes = base64.urlsafe_b64decode(base64_hash)
     hex_hash = hash_bytes.hex()
@@ -63,16 +62,7 @@ CHAR_SETS = [
 ]
 
 def generate_password(enable_sets, hex_input):
-    """
-    Generate a password using specified character sets and hexadecimal input
-    
-    Args:
-        enable_sets (list): List of 3 booleans indicating enabled character sets
-        hex_input (str|bytes): Hexadecimal string or bytes to use for password generation
-        
-    Returns:
-        str: Generated password
-    """
+
     # Validate inputs
     if not isinstance(enable_sets, (list, tuple)) or len(enable_sets) != 5:
         raise ValueError("enable_sets must be a list of 3 booleans")
@@ -120,12 +110,48 @@ Builder.load_string('''
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [10,]
+            radius: [22,]
                     
+<ButtonLabel@ButtonBehavior+Label>:
+    color: (0.1, 0.5, 0.8, 1)
+    underline: True
+    font_size: '14sp'
+    size_hint: (None, None)
+    size: self.texture_size
+    canvas.before:
+        Line:
+            points: [self.x, self.y, self.right, self.y] if self.underline else []
+            width: 1
+                    
+<MyTextInput@BoxLayout>:
+    size_hint: .85, None
+    height: dp(40)
+    pos_hint: {'center_x': 0.5, "center_y": 0.5}
+    orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [22,]
+        Color:
+            rgba: 0.8, 0.8, 0.8, 1  # Border color
+        Line:
+            rounded_rectangle: [self.x, self.y, self.width, self.height, 22]
+            width: 1
+                                         
 <WelcomeScreen>:
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+                    
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
+        padding: [10, 20]
         spacing: 10
         
         Label:
@@ -136,16 +162,26 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            spacing: 5
+            spacing: 20
             
-            TextInput:
-                id: username_input
-                hint_text: 'User ID'
-                password: False
-                multiline: False
-                size_hint_x: 0.7
-                write_tab: False
-                on_focus: root.toggle_keyboard()
+
+            MyTextInput:
+                TextInput:
+                    id: username_input
+                    hint_text: 'User ID'
+                    password: False
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
+                    on_focus: root.toggle_keyboard()
             
             RoundedButton:
                 id: toggle_password_btn
@@ -155,26 +191,30 @@ Builder.load_string('''
                     username_input.password = not username_input.password
                     self.text = 'User ID'
                 
-            RoundedButton:
-                text: 'Why username?'
-                size_hint_x: 0.3
-                on_press: root.manager.current = 'username_explanation'
         
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            spacing: 5
+            spacing: 20
                     
-            TextInput:
-                id: password_input
-                hint_text: 'Password'
-                password: True
-                multiline: False
-                size_hint_y: None
-                height: dp(40)
-                write_tab: False
-                on_focus: root.toggle_keyboard()
+            MyTextInput:
+                TextInput:
+                    id: password_input
+                    hint_text: 'Password'
+                    password: True
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
+                    on_focus: root.toggle_keyboard()
                 
             RoundedButton:
                 id: toggle_password_btn
@@ -188,44 +228,36 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            spacing: 200
-        
-            RoundedButton:
-                text: 'Know more about login'
-                on_press: root.manager.current = 'login_info'
+            spacing: 100
             
             RoundedButton:
                 text: 'Submit'
                 on_press: root.check_password()
+                    
+        ButtonLabel:
+            text: 'Click here to understand what is this User ID and password and how this app works'
+            size_hint: (None, None)
+            size: self.texture_size
+            padding: [0, 0]
+            pos_hint: {'center_x': 0.5}
+            on_press: root.manager.current = 'login_info'
 
         Widget:
             id: keyboard_placeholder
             size_hint_y: None
-            height: 0
-
-<UsernameExplanationScreen>:
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 20
-        spacing: 10
-        
-        Label:
-            text: 'Username Explanation'
-            font_size: '20sp'
-            
-        Label:
-            text: 'Username helps us personalize your experience and keep your data secure. Please use a unique username that others can\\'t easily guess.'
-            halign: 'center'
-            valign: 'middle'
-            text_size: self.size
-        
-        Button:
-            text: 'Back'
-            size_hint_y: None
-            height: '40sp'
-            on_press: root.manager.current = 'welcome'                   
+            pos_hint: {'center_x': 0.5, "center_y": 0.5}        
+            height: 10
+                 
 
 <LoginInfoScreen>:
+                    
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+                    
     BoxLayout:
         orientation: 'vertical'
         padding: 20
@@ -233,10 +265,12 @@ Builder.load_string('''
         
         Label:
             text: 'Login Information'
+            color: 0,0,0,1
             font_size: '20sp'
             
         Label:
-            text: 'For security reasons:\\n- Use a strong password\\n- Don\\'t share your credentials\\n- Virtual keyboard helps prevent keyloggers'
+            text: 'For security reasons:\\n- Use a strong password\\n- Don\\'t share your credentials\\n- Virtual keyboard helps prevent keyloggers'       
+            color: 0,0,0,1
             halign: 'center'
         
         Button:
@@ -246,6 +280,14 @@ Builder.load_string('''
             on_press: root.manager.current = 'welcome'
                     
 <ListScreen>:
+                    
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         orientation: 'vertical'
         
@@ -253,6 +295,7 @@ Builder.load_string('''
             id: rv
             viewclass: 'ItemRow'
             scroll_type: ['bars', 'content']
+            color: 0,0,0,1
             
             RecycleBoxLayout:
                 orientation: 'vertical'
@@ -282,10 +325,12 @@ Builder.load_string('''
     
     Label:
         text: root.name
+        color: 0,0,0,1
         size_hint_x: 0.3
         
     Label:
         text: root.email if root.email else '-'
+        color: 0,0,0,1
         size_hint_x: 0.25
     
     Button:
@@ -304,21 +349,42 @@ Builder.load_string('''
         on_press: app.delete_item(root.index)
 
 <AddItemScreen>:
+                    
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
-        spacing: 10
+        padding: 10
+        spacing: 5
         
         Label:
             text: 'Add New Item'
+            color: 0,0,0,1
             font_size: '20sp'
-            
-        TextInput:
-            id: name_input
-            hint_text: 'App/Website name (required)'
-            multiline: False
-            size_hint_y: None
-            height: dp(40)
+
+        MyTextInput:                
+            TextInput:
+                id: name_input
+                hint_text: 'App/Website name (required)'
+                multiline: False
+                size_hint_y: None
+                height: dp(40)
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0, 0, 0, 1
+                hint_text_color: 0.6, 0.6, 0.6, 1
+                size_hint_y: None
+                height: dp(40)
+                padding: [15, 10]
+                size_hint: 1, 1
+                font_size: '18sp'
+                multiline: False
             
         BoxLayout:
             orientation: 'horizontal'
@@ -326,12 +392,24 @@ Builder.load_string('''
             height: dp(40)
             spacing: 10
             
-            TextInput:
-                id: email_input
-                hint_text: 'App/Website password (optional)'
-                password: True
-                multiline: False
-                size_hint_x: 0.8
+            MyTextInput:
+                TextInput:
+                    id: email_input
+                    hint_text: 'App/Website password (optional)'
+                    password: True
+                    multiline: False
+                    size_hint_x: 0.8
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
             
             RoundedButton:
                 id: toggle_password_btn
@@ -341,83 +419,176 @@ Builder.load_string('''
                     email_input.password = not email_input.password
                     self.text = 'Show Password'
                     
-            RoundedButton:
-                text: 'Know More'
-                size_hint_x: 0.2
-                on_press: root.manager.current = 'additional_info'
+                    
+        ButtonLabel:
+            text: 'click here to know more about how to use all these options'
+            color: 0,0,0.8,1
+            size_hint: (None, None)
+            size: self.texture_size
+            padding: [0, 0]
+            pos_hint: {'center_x': 0.5}
+            on_press: root.manager.current = 'additional_info'
         
         Label:
             text: 'Choose which characters do you want to include in your password:'
+            color: 0,0,0,1
             size_hint_y: None
             height: dp(30)
-        
+                    
         GridLayout:
             cols: 2
             rows: 5
             size_hint_y: None
-            height: dp(80)
-            
+            height: dp(100)  # Reduced height
+            spacing: [0, 5]  # No horizontal spacing
+            col_default_width: root.width * 0.7  # Allocate 45% width for each column
+
+            # Checkbox items
+            Label:
+                text: 'Uppercase Alphabets (Capital letters)'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]  # Right padding only
             CheckBox:
                 id: check1
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}  # Align left in column
+
             Label:
-                text: 'Uppercase Alphabets (Capital letters)'
-            
+                text: 'Lowercase Alphabets (Small letters)'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check2
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Lowercase Alphabets (Small letters)'
-            
+                text: 'Numbers'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check3
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Numbers'
-            
+                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check4
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
-            
+                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check5
                 active: True
-            Label:
-                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
-        
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last checkbox and slider
+
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: None
-            height: dp(60)
-            spacing: 5
-            
+            size_hint: 0.9, None
+            height: dp(50)
+            pos_hint: {'center_x': 0.5}
+            spacing: dp(15)
+                    
             Label:
-                text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+                text: "Set the length of your password on this slider"
+                color: 0,0,0,1
                 size_hint_y: None
                 height: dp(20)
+                halign: 'center'
+
                 
             Slider:
                 id: slider
                 min: 1
                 max: 4
                 step: 1
-                value: 2
-                value_normalized: (self.value - self.min) / (self.max - self.min)
-                on_value: root.slider_value = int(self.value)
-        
-        RoundedButton:
-            text: 'Add Item'
-            on_press: root.add_item()
+                value: root.slider_value  # Two-way binding
+                on_value: root.slider_value = int(self.value)  # Update property
+                canvas:
+                    Color:
+                        rgba: 0.8, 0.8, 0.8, 1  # Light gray background track
+                    Rectangle:
+                        pos: self.x, self.center_y - dp(2)
+                        size: self.width, dp(4)
                     
-        RoundedButton:
-            text: 'Back'
+                    Color:
+                        rgba: 0, 0, 0, 1  # Black progress bar
+                    Rectangle:
+                        pos: self.x, self.center_y - dp(2)
+                        size: self.value_pos[0] - self.x, dp(4)
+
+        Label:
+            text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+            color: 0,0,0,1
             size_hint_y: None
-            height: '40sp'
-            on_press: root.manager.current = 'list'
+            height: dp(20)
+            halign: 'center'
+                    
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last slider and button
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(40)
+            spacing: 500
+
+            RoundedButton:
+                text: 'Add Item'
+                on_press: root.add_item()
+                        
+            RoundedButton:
+                text: 'Back'
+                size_hint_y: None
+                height: '40sp'
+                on_press: root.manager.current = 'list'
 
 <EditItemScreen>:
+                    
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         orientation: 'vertical'
         padding: 20
@@ -425,14 +596,27 @@ Builder.load_string('''
         
         Label:
             text: 'Edit Item'
+            color: 0,0,0,1
             font_size: '20sp'
             
-        TextInput:
-            id: name_input
-            hint_text: 'App/Website name (required)'
-            multiline: False
-            size_hint_y: None
-            height: dp(40)
+        MyTextInput:                
+            TextInput:
+                id: name_input
+                hint_text: 'App/Website name (required)'
+                multiline: False
+                size_hint_y: None
+                height: dp(40)
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0, 0, 0, 1
+                hint_text_color: 0.6, 0.6, 0.6, 1
+                size_hint_y: None
+                height: dp(40)
+                padding: [15, 10]
+                size_hint: 1, 1
+                font_size: '18sp'
+                multiline: False
             
         BoxLayout:
             orientation: 'horizontal'
@@ -440,12 +624,24 @@ Builder.load_string('''
             height: dp(40)
             spacing: 10
             
-            TextInput:
-                id: email_input
-                hint_text: 'App/Website password (optional)'
-                password: True
-                multiline: False
-                size_hint_x: 0.8
+            MyTextInput:
+                TextInput:
+                    id: email_input
+                    hint_text: 'App/Website password (optional)'
+                    password: True
+                    multiline: False
+                    size_hint_x: 0.8
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
             
             RoundedButton:
                 id: toggle_password_btn
@@ -454,83 +650,166 @@ Builder.load_string('''
                 on_press: 
                     email_input.password = not email_input.password
                     self.text = 'Show Password'
-                
-            RoundedButton:
-                text: 'Know More'
-                size_hint_x: 0.2
-                on_press: root.manager.current = 'additional_info'
+                    
+        ButtonLabel:
+            text: 'click here to know more about how to use all these options'
+            color: 0,0,0.8,1
+            size_hint: (None, None)
+            size: self.texture_size
+            padding: [0, 0]
+            pos_hint: {'center_x': 0.5}
+            on_press: root.manager.current = 'additional_info'
         
         Label:
             text: 'Choose which characters do you want to include in your password:'
+            color: 0,0,0,1
             size_hint_y: None
             height: dp(30)
-        
+                    
         GridLayout:
             cols: 2
             rows: 5
             size_hint_y: None
-            height: dp(80)
-            
+            height: dp(100)  # Reduced height
+            spacing: [0, 5]  # No horizontal spacing
+            col_default_width: root.width * 0.7  # Allocate 45% width for each column
+
+            # Checkbox items
+            Label:
+                text: 'Uppercase Alphabets (Capital letters)'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]  # Right padding only
             CheckBox:
                 id: check1
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}  # Align left in column
+
             Label:
-                text: 'Uppercase Alphabets (Capital letters)'
-            
+                text: 'Lowercase Alphabets (Small letters)'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check2
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Lowercase Alphabets (Small letters)'
-            
+                text: 'Numbers'
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check3
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Numbers'
-            
+                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check4
                 active: True
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
+
             Label:
-                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
-            
+                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
+                color: 0,0,0,1
+                halign: 'right'
+                valign: 'middle'
+                text_size: self.width, None
+                padding: [0, 0, 5, 0]
             CheckBox:
                 id: check5
                 active: True
-            Label:
-                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
+                size_hint: None, None
+                size: dp(25), dp(25)
+                pos_hint: {'x': 0}
 
-        
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last checkbox and slider
+
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: None
-            height: dp(60)
-            spacing: 5
-            
+            size_hint: 0.9, None
+            height: dp(50)
+            pos_hint: {'center_x': 0.5}
+            spacing: dp(15)
+                    
             Label:
-                text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+                text: "Set the length of your password on this slider"
+                color: 0,0,0,1
                 size_hint_y: None
                 height: dp(20)
+                halign: 'center'
+
                 
             Slider:
                 id: slider
                 min: 1
                 max: 4
                 step: 1
-                value: root.slider_value
-                value_normalized: (self.value - self.min) / (self.max - self.min)
-                on_value: root.slider_value = int(self.value)
-
-        RoundedButton:
-            text: 'Save Changes'
-            on_press: root.save_item()
+                value: root.slider_value  # Two-way binding
+                on_value: root.slider_value = int(self.value)  # Update property
+                canvas:
+                    Color:
+                        rgba: 0.8, 0.8, 0.8, 1  # Light gray background track
+                    Rectangle:
+                        pos: self.x, self.center_y - dp(2)
+                        size: self.width, dp(4)
                     
-        RoundedButton:
-            text: 'Back'
+                    Color:
+                        rgba: 0, 0, 0, 1  # Black progress bar
+                    Rectangle:
+                        pos: self.x, self.center_y - dp(2)
+                        size: self.value_pos[0] - self.x, dp(4)
+
+        Label:
+            text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+            color: 0,0,0,1
             size_hint_y: None
-            height: '40sp'
-            on_press: root.manager.current = 'list'
+            height: dp(20)
+            halign: 'center'
+                    
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last slider and button
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(40)
+            spacing: 500
+
+            RoundedButton:
+                text: 'Save Changes'
+                on_press: root.save_item()
+                        
+            RoundedButton:
+                text: 'Back'
+                size_hint_y: None
+                height: '40sp'
+                on_press: root.manager.current = 'list'
 
 <AdditionalInfoScreen>:
     BoxLayout:
@@ -553,6 +832,14 @@ Builder.load_string('''
             on_press: root.manager.current = 'add_item'
 
 <ResultScreen>:
+                    
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1  # White background
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
     BoxLayout:
         orientation: 'vertical'
         padding: 20
@@ -561,30 +848,48 @@ Builder.load_string('''
         Label:
             id: result_message
             text: 'Generating password....'
+            color: 0,0,0,1
             font_size: '20sp'
-        
-        TextInput:
-            id: result_input
-            text: ''
-            password: True
-            readonly: True
-            multiline: False
-            size_hint_y: None
-            height: '40sp'
-        
-        RoundedButton:
-            id: toggle_result_password_btn
-            text: 'Show Password'
-            size_hint_x: 0.2
-            on_press: 
-                result_input.password = not result_input.password
-                self.text = 'Show Password'
                     
-        Button:
-            text: 'Copy to Clipboard'
-            size_hint_y: None
-            height: '40sp'
-            on_press: root.copy_to_clipboard()
+        MyTextInput:                
+            TextInput:
+                id: result_input
+                text: ''
+                password: True
+                readonly: True
+                multiline: False
+                size_hint_y: None
+                height: '40sp'
+                background_normal: ''
+                background_active: ''
+                background_color: 0, 0, 0, 0
+                foreground_color: 0, 0, 0, 1
+                hint_text_color: 0.6, 0.6, 0.6, 1
+                size_hint_y: None
+                height: dp(40)
+                padding: [15, 10]
+                size_hint: 1, 1
+                font_size: '18sp'
+                multiline: False
+                    
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: 20
+            spacing: 10
+            
+            RoundedButton:
+                id: toggle_result_password_btn
+                text: 'Show Password'
+                size_hint_x: 0.2
+                on_press: 
+                    result_input.password = not result_input.password
+                    self.text = 'Show Password'
+                        
+            RoundedButton:
+                text: 'Copy to Clipboard'
+                size_hint_y: None
+                height: '40sp'
+                on_press: root.copy_to_clipboard()
         
         Button:
             text: 'Back to List'
@@ -675,6 +980,9 @@ class WelcomeScreen(Screen):
             self.ids.password_input.text += key
 
 class UsernameExplanationScreen(Screen):
+    pass
+
+class ButtonLabel(ButtonBehavior,Label):
     pass
 
 class LoginInfoScreen(Screen):
@@ -813,7 +1121,6 @@ class InventoryApp(App):
     def build(self):
         sm = ScreenManager()
         sm.add_widget(WelcomeScreen(name='welcome'))
-        sm.add_widget(UsernameExplanationScreen(name='username_explanation'))
         sm.add_widget(LoginInfoScreen(name='login_info'))
         sm.add_widget(ListScreen(name='list'))
         sm.add_widget(AddItemScreen(name='add_item'))
