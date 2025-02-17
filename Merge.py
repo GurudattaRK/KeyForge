@@ -140,34 +140,63 @@ Builder.load_string('''
             
             TextInput:
                 id: username_input
-                hint_text: 'Username'
+                hint_text: 'User ID'
+                password: False
                 multiline: False
                 size_hint_x: 0.7
                 write_tab: False
                 on_focus: root.toggle_keyboard()
+            
+            RoundedButton:
+                id: toggle_password_btn
+                text: 'Hide User ID'
+                size_hint_x: 0.2
+                on_press: 
+                    username_input.password = not username_input.password
+                    self.text = 'User ID'
                 
             RoundedButton:
                 text: 'Why username?'
                 size_hint_x: 0.3
                 on_press: root.manager.current = 'username_explanation'
         
-        TextInput:
-            id: password_input
-            hint_text: 'Password'
-            password: True
-            multiline: False
+        BoxLayout:
+            orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            write_tab: False
-            on_focus: root.toggle_keyboard()
+            spacing: 5
+                    
+            TextInput:
+                id: password_input
+                hint_text: 'Password'
+                password: True
+                multiline: False
+                size_hint_y: None
+                height: dp(40)
+                write_tab: False
+                on_focus: root.toggle_keyboard()
+                
+            RoundedButton:
+                id: toggle_password_btn
+                text: 'Show password'
+                size_hint_x: 0.2
+                on_press: 
+                    password_input.password = not password_input.password
+                    self.text = 'Show password'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: dp(40)
+            spacing: 200
         
-        RoundedButton:
-            text: 'Know more about login'
-            on_press: root.manager.current = 'login_info'
-        
-        RoundedButton:
-            text: 'Submit'
-            on_press: root.check_password()
+            RoundedButton:
+                text: 'Know more about login'
+                on_press: root.manager.current = 'login_info'
+            
+            RoundedButton:
+                text: 'Submit'
+                on_press: root.check_password()
 
         Widget:
             id: keyboard_placeholder
@@ -300,9 +329,18 @@ Builder.load_string('''
             TextInput:
                 id: email_input
                 hint_text: 'App/Website password (optional)'
+                password: True
                 multiline: False
                 size_hint_x: 0.8
-                
+            
+            RoundedButton:
+                id: toggle_password_btn
+                text: 'Show Password'
+                size_hint_x: 0.2
+                on_press: 
+                    email_input.password = not email_input.password
+                    self.text = 'Show Password'
+                    
             RoundedButton:
                 text: 'Know More'
                 size_hint_x: 0.2
@@ -405,8 +443,17 @@ Builder.load_string('''
             TextInput:
                 id: email_input
                 hint_text: 'App/Website password (optional)'
+                password: True
                 multiline: False
                 size_hint_x: 0.8
+            
+            RoundedButton:
+                id: toggle_password_btn
+                text: 'Show Password'
+                size_hint_x: 0.2
+                on_press: 
+                    email_input.password = not email_input.password
+                    self.text = 'Show Password'
                 
             RoundedButton:
                 text: 'Know More'
@@ -524,7 +571,15 @@ Builder.load_string('''
             multiline: False
             size_hint_y: None
             height: '40sp'
-            
+        
+        RoundedButton:
+            id: toggle_result_password_btn
+            text: 'Show Password'
+            size_hint_x: 0.2
+            on_press: 
+                result_input.password = not result_input.password
+                self.text = 'Show Password'
+                    
         Button:
             text: 'Copy to Clipboard'
             size_hint_y: None
@@ -723,6 +778,7 @@ class AdditionalInfoScreen(Screen):
     pass
 
 class ResultScreen(Screen):
+
     def copy_to_clipboard(self):
         text = self.ids.result_input.text
         result_screen = self.manager.get_screen('result')
@@ -780,10 +836,14 @@ class InventoryApp(App):
 
     def play_item(self, index):
         # Switch to the ResultScreen first
+        result_screen = self.root.get_screen('result')
+        result_screen.ids.result_message.text = "Generating Password ..."
+        result_screen.ids.result_input.text = ""
+
         self.root.current = 'result'
         
         # Schedule the processing to start after the screen transition
-        Clock.schedule_once(lambda dt: self.process_item(index), 0.75)
+        Clock.schedule_once(lambda dt: self.process_item(index), 0.6)
 
     def process_item(self, index):
         if 0 <= index < len(self.items):
@@ -796,8 +856,10 @@ class InventoryApp(App):
             w = item['slider_value']
             hash_len = (2**w)*8
 
-            if len(App_password)< 4:
-                App_password = "HardC0d3d 541t"
+            if len(App_password)< 16:
+                tmp_salt = "HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5"
+                App_password = Argon2i_Hash(App_password,tmp_salt,1,1024,1,64)
+
             
             master_hash = Argon2i_Hash(GlobalVars.password,GlobalVars.username,20,102400,1,64)
 
@@ -806,6 +868,7 @@ class InventoryApp(App):
             app_master_hash = Argon2i_Hash(master_hash,App_hash,20,102400,1,hash_len)
 
             App_key= generate_password(character_set,app_master_hash)
+
 
             print(f"\nPlay:\nname:{App_name}\nemail:{App_password}\nchecks:{character_set}\nslider:{w}\nHash length:{hash_len}\nHash:{app_master_hash}\nApp password:{App_key}")
 
