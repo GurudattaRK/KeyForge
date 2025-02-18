@@ -12,7 +12,7 @@ from kivy.uix.label import Label
 from kivy.metrics import dp
 from argon2 import low_level, Type
 import base64
-
+import platform
 
 def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
     """
@@ -1092,13 +1092,49 @@ class ResultScreen(Screen):
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Password Copied\nIt will be deleted & clipboard will be cleared in 10 seconds!"
 
-        Clipboard.put(text)
+        system = platform.system()
+        
+        if system == 'Linux':
+            # Linux expects bytes
+            if isinstance(text, str):
+                text = text.encode('utf-8')
+        elif system in ['Darwin', 'iOS', 'Android']:
+            # macOS (Darwin), iOS, and Android expect strings
+            if isinstance(text, bytes):
+                text = text.decode('utf-8')
+        else:  # Windows and others
+            # Windows expects strings
+            if isinstance(text, bytes):
+                text = text.decode('utf-8')
+
+        try:
+            Clipboard.put(text)
+        except Exception as e:
+            print(f"Clipboard error: {e}")
+            # Fallback attempt with opposite format
+            try:
+                if isinstance(text, str):
+                    Clipboard.put(text.encode('utf-8'))
+                else:
+                    Clipboard.put(text.decode('utf-8'))
+            except Exception as e:
+                print(f"Fallback clipboard error: {e}")
+                result_screen.ids.result_message.text = "Error copying to clipboard"
+                return
+
         Clock.schedule_once(lambda dt: self.clear_clipboard(), 10)
         print(f"\nPlay result:\nname:{text}")
 
-
     def clear_clipboard(self):
-        Clipboard.put('')
+        system = platform.system()
+        
+        try:
+            if system == 'Linux':
+                Clipboard.put(b'')
+            else:  # Windows, macOS, iOS, Android
+                Clipboard.put('')
+        except Exception as e:
+            print(f"Error clearing clipboard: {e}")
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Copied password is deleted & Clipboard cleared"
         print("\nclipboard data:",Clipboard.get())
