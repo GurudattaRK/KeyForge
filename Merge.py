@@ -10,47 +10,48 @@ from kivy.uix.vkeyboard import VKeyboard
 from kivy.uix.button import ButtonBehavior
 from kivy.uix.label import Label
 from kivy.metrics import dp
-from argon2 import low_level, Type
+# from argon2 import low_level, Type
 import base64
 import platform
+import pyargon2
 
 def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
     """
-        password: The password to hash
-        time_cost: Number of iterations
-        memory_cost: Memory usage in KiB
-        parallelism: Number of parallel threads
-        hash_length: Desired length of the hash in bytes
+    Hashes a password using Argon2i via pyargon2.
+    
+    Args:
+        password (str): The password to hash
+        Salt (str): The salt value
+        Time_Cost (int): Number of iterations
+        Memory_Cost (int): Memory usage in KiB
+        Parallelism (int): Number of parallel threads
+        hash_length (int): Desired length of the hash in bytes
+    
+    Returns:
+        str: Hexadecimal string representation of the hash
     """
-    password_bytes = password.encode('utf-8')
-    Salt = Salt.encode('utf-8')
-    # Generate the hash using low-level function to specify fixed salt
-    hash_bytes = low_level.hash_secret(
-        secret=password_bytes,
-        salt=Salt,
+    password_bytes = str(password)
+    salt_bytes = str(Salt)
+    
+    # Generate the hash using pyargon2
+    result = pyargon2.hash(
+        password=password_bytes,
+        salt=salt_bytes,
         time_cost=Time_Cost,
         memory_cost=Memory_Cost,
         parallelism=Parallelism,
         hash_len=hash_length,
-        type=Type.I,  # Argon2i (data-independent)
-        version=19    # Latest Argon2 version
+        variant='i'  # Argon2i (data-independent)
     )
+                                    # pyargon2.hash()
+    # Get the raw hash bytes directly from the result
+    # hash_bytes = result['hash']
     
-    # Decode the full hash string
-    hash_str = hash_bytes.decode('utf-8')
+    # Convert to hexadecimal string
+    print("\nhash:",result)
+    # hex_hash = result.hex()   
     
-    # Extract the base64 hash value (last part after $)
-    base64_hash = hash_str.split('$')[-1]
-    
-    missing_padding = len(base64_hash) % 4
-    if missing_padding:
-        base64_hash += '=' * (4 - missing_padding)
-    
-    # Use urlsafe_b64decode since Argon2 uses URL-safe base64
-    hash_bytes = base64.urlsafe_b64decode(base64_hash)
-    hex_hash = hash_bytes.hex()
-    
-    return hex_hash
+    return result
 
 CHAR_SETS = [
     # Set 1: Alphanumeric (62 characters)
@@ -954,7 +955,6 @@ class WelcomeScreen(Screen):
             # Ignore these keys
             return
         else:
-            # Handle regular keys
             self.handle_regular_key(key)
     
     def handle_backspace(self):
@@ -996,10 +996,9 @@ class ListScreen(Screen):
         ]
 
 class AddItemScreen(Screen):
-    slider_value = NumericProperty(2)  # Add this line to define the property
+    slider_value = NumericProperty(2)  
     
     def on_enter(self):
-        # Reset checkboxes to True when the screen is opened
         self.ids.check1.active = True
         self.ids.check2.active = True
         self.ids.check3.active = True
@@ -1024,12 +1023,12 @@ class AddItemScreen(Screen):
             self.ids.check5.active
         ]
         
-        # Add new item with checks
+
         App.get_running_app().items.append({
             'name': name,
             'email': email,
             'checks': checks,
-            'slider_value': self.slider_value  # Store the slider value
+            'slider_value': self.slider_value
         })
 
         print(f"\nAdding:\nname:{name}\nemail:{email}\nchecks:{checks}\nslider:{self.slider_value}")
@@ -1076,7 +1075,7 @@ class EditItemScreen(Screen):
                 'name': name,
                 'email': email,
                 'checks': checks,
-                'slider_value': self.slider_value  # Save the slider value
+                'slider_value': self.slider_value 
             }
             self.manager.current = 'list'
 
@@ -1091,32 +1090,18 @@ class ResultScreen(Screen):
         text = self.ids.result_input.text
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Password Copied\nIt will be deleted & clipboard will be cleared in 10 seconds!"
-
         system = platform.system()
-        
+                
         if system == 'Linux':
-            # Linux expects bytes
-            if isinstance(text, str):
-                text = text.encode('utf-8')
-        elif system in ['Darwin', 'iOS', 'Android']:
-            # macOS (Darwin), iOS, and Android expect strings
-            if isinstance(text, bytes):
-                text = text.decode('utf-8')
-        else:  # Windows and others
-            # Windows expects strings
-            if isinstance(text, bytes):
-                text = text.decode('utf-8')
+            Clipboard.copy(text)
+
 
         try:
             Clipboard.put(text)
         except Exception as e:
             print(f"Clipboard error: {e}")
-            # Fallback attempt with opposite format
             try:
-                if isinstance(text, str):
-                    Clipboard.put(text.encode('utf-8'))
-                else:
-                    Clipboard.put(text.decode('utf-8'))
+                Clipboard.put(text.encode('utf-8'))
             except Exception as e:
                 print(f"Fallback clipboard error: {e}")
                 result_screen.ids.result_message.text = "Error copying to clipboard"
@@ -1127,18 +1112,17 @@ class ResultScreen(Screen):
 
     def clear_clipboard(self):
         system = platform.system()
-        
         try:
             if system == 'Linux':
-                Clipboard.put(b'')
-            else:  # Windows, macOS, iOS, Android
+                Clipboard.copy('')
+            else:
                 Clipboard.put('')
         except Exception as e:
             print(f"Error clearing clipboard: {e}")
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Copied password is deleted & Clipboard cleared"
-        print("\nclipboard data:",Clipboard.get())
-        print("Clipboard content erased after 5 seconds")
+        print("\nclipboard data:", Clipboard.get())
+        print("Clipboard content erased after 10 seconds")
 
 class ItemRow(RecycleDataViewBehavior, BoxLayout):
     index = NumericProperty()
