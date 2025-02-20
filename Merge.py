@@ -13,45 +13,42 @@ from kivy.metrics import dp
 # from argon2 import low_level, Type
 import base64
 import platform
-import pyargon2
+import hashlib
 
-def Argon2i_Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
+
+def Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
     """
-    Hashes a password using Argon2i via pyargon2.
+    Hashes a password using scrypt.
     
     Args:
-        password (str): The password to hash
-        Salt (str): The salt value
-        Time_Cost (int): Number of iterations
-        Memory_Cost (int): Memory usage in KiB
-        Parallelism (int): Number of parallel threads
-        hash_length (int): Desired length of the hash in bytes
+        password (str): The password to hash.
+        Salt (str): The salt value.
+        Time_Cost (int): Used to derive scrypt's 'n' parameter (n = 2**Time_Cost).
+        Memory_Cost (int): Desired memory usage in KiB. Used here to compute 'r' so that:
+                           memory ≈ n * r * 128 bytes ≈ Memory_Cost * 1024.
+        Parallelism (int): scrypt's parallelization factor, 'p'.
+        hash_length (int): Desired length of the derived key in bytes.
     
     Returns:
-        str: Hexadecimal string representation of the hash
+        str: Hexadecimal string representation of the hash.
     """
-    password_bytes = str(password)
-    salt_bytes = str(Salt)
+    # Convert password and salt to bytes.
+    password_bytes = password.encode('utf-8')
+    salt_bytes = Salt.encode('utf-8')
     
-    # Generate the hash using pyargon2
-    result = pyargon2.hash(
-        password=password_bytes,
-        salt=salt_bytes,
-        time_cost=Time_Cost,
-        memory_cost=Memory_Cost,
-        parallelism=Parallelism,
-        hash_len=hash_length,
-        variant='i'  # Argon2i (data-independent)
-    )
-                                    # pyargon2.hash()
-    # Get the raw hash bytes directly from the result
-    # hash_bytes = result['hash']
+    # Map Time_Cost to n. (n must be a power of 2.)
+    n = 2 ** Time_Cost
+
+    # Compute r such that: n * r * 128 ≈ Memory_Cost * 1024.
+    # r = (Memory_Cost * 1024) / (n * 128) = (Memory_Cost * 8) / n.
+    r = max(1, int((Memory_Cost * 8) / n))
     
-    # Convert to hexadecimal string
-    print("\nhash:",result)
-    # hex_hash = result.hex()   
+    # Parallelism maps directly.
+    p = Parallelism
     
-    return result
+    # Compute scrypt hash.
+    result_bytes = hashlib.scrypt(password_bytes, salt=salt_bytes, n=n, r=r, p=p, dklen=hash_length)
+    return result_bytes.hex()
 
 CHAR_SETS = [
     # Set 1: Alphanumeric (62 characters)
@@ -917,7 +914,7 @@ class WelcomeScreen(Screen):
         
         print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
         if len(GlobalVars.username) < 8:
-            GlobalVars.username = Argon2i_Hash(GlobalVars.username,"H4!?|](hb)",4,10,1,16)
+            GlobalVars.username = Hash(GlobalVars.username,"H4!?|](hb)",4,8,1,16)
             print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
 
 
@@ -1185,14 +1182,14 @@ class InventoryApp(App):
 
             if len(App_password)< 16:
                 tmp_salt = "HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5"
-                App_password = Argon2i_Hash(App_password,tmp_salt,1,1024,1,64)
+                App_password = Hash(App_password,tmp_salt,4,1024,1,64)
 
             
-            master_hash = Argon2i_Hash(GlobalVars.password,GlobalVars.username,20,102400,1,64)
+            master_hash = Hash(GlobalVars.password,GlobalVars.username,10,10240,1,64)
 
-            App_hash = Argon2i_Hash(App_name,App_password,20,102400,1,64)
+            App_hash = Hash(App_name,App_password,10,10240,1,64)
 
-            app_master_hash = Argon2i_Hash(master_hash,App_hash,20,102400,1,hash_len)
+            app_master_hash = Hash(master_hash,App_hash,10,10240,1,hash_len)
 
             App_key= generate_password(character_set,app_master_hash)
 
