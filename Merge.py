@@ -1088,13 +1088,13 @@ class ResultScreen(Screen):
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Password Copied\nIt will be deleted & clipboard will be cleared in 10 seconds!"
         system = platform.system()
-                
-        if system == 'Linux':
-            Clipboard.copy(text)
-
-
+        
         try:
-            Clipboard.put(text)
+            if system == 'Linux':
+                Clipboard.copy(text)
+                
+            else:
+                Clipboard.put(text)
         except Exception as e:
             print(f"Clipboard error: {e}")
             try:
