@@ -1092,7 +1092,7 @@ class ResultScreen(Screen):
         try:
             if system == 'Linux':
                 Clipboard.copy(text)
-                
+
             else:
                 Clipboard.put(text)
         except Exception as e:
@@ -1118,7 +1118,6 @@ class ResultScreen(Screen):
             print(f"Error clearing clipboard: {e}")
         result_screen = self.manager.get_screen('result')
         result_screen.ids.result_message.text = f"Copied password is deleted & Clipboard cleared"
-        print("\nclipboard data:", Clipboard.get())
         print("Clipboard content erased after 10 seconds")
 
 class ItemRow(RecycleDataViewBehavior, BoxLayout):

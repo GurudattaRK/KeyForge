@@ -47,7 +47,7 @@ def Argon2i_Hash(password, Salt, time_cost, memory_cost, parallelism, hash_lengt
     
     return hash_str, hex_hash
 
-key = "bruh"
+key = ""
 salt = '12345678'
 start_time = time.time()
 example1_full, example1_hash = Argon2i_Hash(key,salt, 40, 102400, 1, 16)
