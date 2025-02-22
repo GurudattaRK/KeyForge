@@ -16,85 +16,7 @@ import platform
 import hashlib
 
 
-def Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
-    """
-    Hashes a password using scrypt.
-    
-    Args:
-        password (str): The password to hash.
-        Salt (str): The salt value.
-        Time_Cost (int): Used to derive scrypt's 'n' parameter (n = 2**Time_Cost).
-        Memory_Cost (int): Desired memory usage in KiB. Used here to compute 'r' so that:
-                           memory ≈ n * r * 128 bytes ≈ Memory_Cost * 1024.
-        Parallelism (int): scrypt's parallelization factor, 'p'.
-        hash_length (int): Desired length of the derived key in bytes.
-    
-    Returns:
-        str: Hexadecimal string representation of the hash.
-    """
-    # Convert password and salt to bytes.
-    password_bytes = password.encode('utf-8')
-    salt_bytes = Salt.encode('utf-8')
-    
-    # Map Time_Cost to n. (n must be a power of 2.)
-    n = 2 ** Time_Cost
 
-    # Compute r such that: n * r * 128 ≈ Memory_Cost * 1024.
-    # r = (Memory_Cost * 1024) / (n * 128) = (Memory_Cost * 8) / n.
-    r = max(1, int((Memory_Cost * 8) / n))
-    
-    # Parallelism maps directly.
-    p = Parallelism
-    
-    # Compute scrypt hash.
-    result_bytes = hashlib.scrypt(password_bytes, salt=salt_bytes, n=n, r=r, p=p, dklen=hash_length)
-    return result_bytes.hex()
-
-CHAR_SETS = [
-    # Set 1: Alphanumeric (62 characters)
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    "abcdefghijklmnopqrstuvwxyz",
-    "0123456789",
-    "!@#$%^&*()_+-=",
-    "[]\\{}|;',./<>? "
-]
-
-def generate_password(enable_sets, hex_input):
-
-    # Validate inputs
-    if not isinstance(enable_sets, (list, tuple)) or len(enable_sets) != 5:
-        raise ValueError("enable_sets must be a list of 3 booleans")
-        
-    allowed_sets = [CHAR_SETS[i] for i, enabled in enumerate(enable_sets) if enabled]
-    
-    if not allowed_sets:
-        raise ValueError("At least one character set must be enabled")
-    
-    # Convert hex input to bytes
-    if isinstance(hex_input, str):
-        hex_str = hex_input.strip().lower()
-        if len(hex_str) % 2 != 0:
-            raise ValueError("Hex string must have even length")
-        try:
-            data = bytes.fromhex(hex_str)
-        except ValueError:
-            raise ValueError("Invalid hexadecimal characters in input")
-    elif isinstance(hex_input, bytes):
-        data = hex_input
-    else:
-        raise TypeError("hex_input must be string or bytes")
-
-    password = []
-    for i, byte in enumerate(data):
-        # Determine which character set to use
-        set_index = i % len(allowed_sets)
-        current_set = allowed_sets[set_index]
-        
-        # Calculate character index using modulo operation
-        char_index = byte % len(current_set)
-        password.append(current_set[char_index])
-    
-    return ''.join(password)
 
 Builder.load_string('''
 <RoundedButton@Button>:
@@ -102,6 +24,8 @@ Builder.load_string('''
     background_color: (0.1, 0.5, 0.8, 1)
     size_hint: None, None
     size: dp(120), dp(40)
+    pos_hint: {'x': 0}
+
     canvas.before:
         Color:
             rgba: self.background_color
@@ -116,6 +40,11 @@ Builder.load_string('''
     font_size: '14sp'
     size_hint: (None, None)
     size: self.texture_size
+    halign: 'center'
+
+    text_size: 300, None
+    size_hint_y: None
+    height: self.texture_size[1]
     canvas.before:
         Line:
             points: [self.x, self.y, self.right, self.y] if self.underline else []
@@ -171,68 +100,88 @@ Builder.load_string('''
                 height: dp(40)
 
             # Row for User ID
+            # BoxLayout:
+            #     orientation: 'horizontal'
+            #     size_hint_y: None
+            #     height: dp(40)
+            #     spacing: 20
+
+            MyTextInput:
+                TextInput:
+                    id: username_input
+                    hint_text: 'User ID'
+                    password: False
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
+                    on_focus: root.toggle_keyboard()
+
+            # Rename this button ID so it's not the same as the password toggle
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
                 height: dp(40)
-                spacing: 20
+                spacing: 100
 
-                MyTextInput:
-                    TextInput:
-                        id: username_input
-                        hint_text: 'User ID'
-                        password: False
-                        background_normal: ''
-                        background_active: ''
-                        background_color: 0, 0, 0, 0
-                        foreground_color: 0, 0, 0, 1
-                        hint_text_color: 0.6, 0.6, 0.6, 1
-                        size_hint_y: None
-                        height: dp(40)
-                        padding: [15, 10]
-                        size_hint: 1, 1
-                        font_size: '18sp'
-                        multiline: False
-                        on_focus: root.toggle_keyboard()
+                Widget:
+                    size_hint_y: None
+                    # width: dp(0)  # Space between last checkbox and slider
 
-                # Rename this button ID so it's not the same as the password toggle
                 RoundedButton:
                     id: toggle_userid_btn
                     text: 'Hide User ID'
-                    size_hint_x: 0.2
+                    # size_hint_x: 0.2
                     on_press:
                         username_input.password = not username_input.password
                         self.text = 'Show User ID' if username_input.password else 'Hide User ID'
 
             # Row for Password
+            # BoxLayout:
+            #     orientation: 'horizontal'
+            #     size_hint_y: None
+            #     height: dp(40)
+            #     spacing: 20
+
+            MyTextInput:
+                TextInput:
+                    id: password_input
+                    hint_text: 'Password'
+                    password: True
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
+                    on_focus: root.toggle_keyboard()
+
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
                 height: dp(40)
-                spacing: 20
+                spacing: 100
 
-                MyTextInput:
-                    TextInput:
-                        id: password_input
-                        hint_text: 'Password'
-                        password: True
-                        background_normal: ''
-                        background_active: ''
-                        background_color: 0, 0, 0, 0
-                        foreground_color: 0, 0, 0, 1
-                        hint_text_color: 0.6, 0.6, 0.6, 1
-                        size_hint_y: None
-                        height: dp(40)
-                        padding: [15, 10]
-                        size_hint: 1, 1
-                        font_size: '18sp'
-                        multiline: False
-                        on_focus: root.toggle_keyboard()
+                Widget:
+                    size_hint_y: None
+                    # height: dp(40)  # Space between last checkbox and slider
 
                 RoundedButton:
                     id: toggle_password_btn
                     text: 'Show password'
-                    size_hint_x: 0.2
+                    # size_hint_x: 0.2
                     on_press:
                         password_input.password = not password_input.password
                         self.text = 'Show password' if password_input.password else 'Hide password'
@@ -244,10 +193,14 @@ Builder.load_string('''
                 height: dp(40)
                 spacing: 100
 
-                RoundedButton:
+                Button:
                     text: 'Submit'
                     on_press: root.check_password()
+                    pos_hint: {'center_x': 0}
 
+            Widget:
+                size_hint_y: None
+                height: dp(80)  # Space between last checkbox and slider
             # Link / Info
             ButtonLabel:
                 text: 'Click here to understand what is this User ID and password and how this app works'
@@ -429,10 +382,12 @@ Builder.load_string('''
                 size_hint: 1, 1
                 font_size: '18sp'
                 multiline: False
-        
+
+
         RoundedButton:
             id: toggle_password_btn
             text: 'Show Password'
+            pos_hint: {'center_x': 0.5}
             size_hint_x: 0.2
             on_press: 
                 email_input.password = not email_input.password
@@ -451,88 +406,104 @@ Builder.load_string('''
         Label:
             text: 'Choose which characters do you want to include in your password:'
             color: 0,0,0,1
-            size_hint_y: None
             height: dp(30)
-                    
-        GridLayout:
-
-            cols: 2
-            rows: 5
+            halign: 'center'
+            
+            text_size: self.width, None
             size_hint_y: None
-            height: dp(100)  # Reduced height
-            spacing: [0, 5]  # No horizontal spacing
-            # col_default_width: root.width * 0.7  # Allocate 45% width for each column
+            height: self.texture_size[1]
 
-            # Checkbox items
-            Label:
-                text: 'Uppercase Alphabets (Capital letters)'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]  # Right padding only
-            CheckBox:
-                id: check1
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}  # Align left in column
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last checkbox and slider
+                    
+        AnchorLayout:
+            anchor_x: 'center'
+            # anchor_y: 'center'
 
-            Label:
-                text: 'Lowercase Alphabets (Small letters)'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check2
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+            GridLayout:
+                cols: 2
+                rows: 5
+                spacing: dp(10)
+                # The key: let the grid expand horizontally
+                size_hint: (0.8, None)
+                height: self.minimum_height
 
-            Label:
-                text: 'Numbers'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check3
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 1st row
+                CheckBox:
+                    id: check1
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Uppercase Alphabets (Capital letters)'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    # Let the label wrap if needed
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
-            Label:
-                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check4
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 2nd row
+                CheckBox:
+                    id: check2
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Lowercase Alphabets (Small letters)'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
-            Label:
-                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check5
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 3rd row
+                CheckBox:
+                    id: check3
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Numbers'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # 4th row
+                CheckBox:
+                    id: check4
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Special characters: ! @ # $ % ^ & * ( ) _ + - = '
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # 5th row
+                CheckBox:
+                    id: check5
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: "Special characters(including space): [ ] \\ { } | ; ' , . / < > ?"
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
         Widget:
             size_hint_y: None
@@ -588,15 +559,17 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            spacing: 500
+            spacing: 100
 
-            RoundedButton:
+            Button:
+                pos_hint: {'x': 0}
                 text: 'Add Item'
                 on_press: root.add_item()
                         
-            RoundedButton:
+            Button:
                 text: 'Back'
                 size_hint_y: None
+                pos_hint: {'x': 1}
                 height: '40sp'
                 on_press: root.manager.current = 'list'
 
@@ -657,9 +630,11 @@ Builder.load_string('''
                 font_size: '18sp'
                 multiline: False
         
+        
         RoundedButton:
             id: toggle_password_btn
             text: 'Show Password'
+            pos_hint: {'center_x': 0.5}
             size_hint_x: 0.2
             on_press: 
                 email_input.password = not email_input.password
@@ -678,88 +653,104 @@ Builder.load_string('''
         Label:
             text: 'Choose which characters do you want to include in your password:'
             color: 0,0,0,1
-            size_hint_y: None
             height: dp(30)
-                    
-        GridLayout:
-
-            cols: 2
-            rows: 5
+            halign: 'center'
+            
+            text_size: self.width, None
             size_hint_y: None
-            height: dp(100)  # Reduced height
-            spacing: [0, 5]  # No horizontal spacing
-            # col_default_width: root.width * 0.7  # Allocate 45% width for each column
+            height: self.texture_size[1]
 
-            # Checkbox items
-            Label:
-                text: 'Uppercase Alphabets (Capital letters)'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]  # Right padding only
-            CheckBox:
-                id: check1
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}  # Align left in column
+        Widget:
+            size_hint_y: None
+            height: dp(80)  # Space between last checkbox and slider
+                    
+        AnchorLayout:
+            anchor_x: 'center'
+            # anchor_y: 'center'
 
-            Label:
-                text: 'Lowercase Alphabets (Small letters)'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check2
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+            GridLayout:
+                cols: 2
+                rows: 5
+                spacing: dp(10)
+                # The key: let the grid expand horizontally
+                size_hint: (0.8, None)
+                height: self.minimum_height
 
-            Label:
-                text: 'Numbers'
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check3
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 1st row
+                CheckBox:
+                    id: check1
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Uppercase Alphabets (Capital letters)'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    # Let the label wrap if needed
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
-            Label:
-                text: 'Special characters like ! @ # $ % ^ & * ( ) _ + - = '
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check4
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 2nd row
+                CheckBox:
+                    id: check2
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Lowercase Alphabets (Small letters)'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
-            Label:
-                text: "Special characters like [ ] \\\ { } | ; ' , . / < > ? (also includes space)"
-                color: 0,0,0,1
-                halign: 'right'
-                valign: 'middle'
-                text_size: self.width, None
-                padding: [0, 0, 5, 0]
-            CheckBox:
-                id: check5
-                active: True
-                size_hint: None, None
-                size: dp(25), dp(25)
-                pos_hint: {'x': 0}
+                # 3rd row
+                CheckBox:
+                    id: check3
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Numbers'
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # 4th row
+                CheckBox:
+                    id: check4
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: 'Special characters: ! @ # $ % ^ & * ( ) _ + - = '
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                # 5th row
+                CheckBox:
+                    id: check5
+                    active: True
+                    size_hint: None, None
+                    size: dp(25), dp(25)
+                Label:
+                    text: "Special characters(including space): [ ] \\ { } | ; ' , . / < > ?"
+                    color: 0,0,0,1
+                    halign: 'left'
+                    valign: 'middle'
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
         Widget:
             size_hint_y: None
@@ -815,15 +806,17 @@ Builder.load_string('''
             orientation: 'horizontal'
             size_hint_y: None
             height: dp(40)
-            spacing: 500
+            spacing: 100
 
-            RoundedButton:
+            Button:
+                pos_hint: {'x': 0}
                 text: 'Save Changes'
                 on_press: root.save_item()
                         
-            RoundedButton:
+            Button:
                 text: 'Back'
                 size_hint_y: None
+                pos_hint: {'x': 1}
                 height: '40sp'
                 on_press: root.manager.current = 'list'
 
@@ -847,6 +840,7 @@ Builder.load_string('''
             padding: 20
             spacing: 10
             
+
             Label:
                 text: 'Additional Information'
                 font_size: '20sp'
@@ -887,6 +881,10 @@ Builder.load_string('''
             text: 'Generating password....'
             color: 0,0,0,1
             font_size: '20sp'
+                # --- Key wrapping properties ---
+            text_size: self.width, None
+            size_hint_y: None
+            height: self.texture_size[1]
                     
         MyTextInput:                
             TextInput:
@@ -917,7 +915,7 @@ Builder.load_string('''
             RoundedButton:
                 id: toggle_result_password_btn
                 text: 'Show Password'
-                size_hint_x: 0.2
+                # size_hint_x: 0.2
                 on_press: 
                     result_input.password = not result_input.password
                     self.text = 'Show Password'
@@ -930,10 +928,93 @@ Builder.load_string('''
         
         Button:
             text: 'Back to List'
+            pos_hint: {'y': 0.1}
             size_hint_y: None
             height: '40sp'
             on_press: root.manager.current = 'list'
 ''')
+
+
+def Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
+    """
+    Hashes a password using scrypt.
+    
+    Args:
+        password (str): The password to hash.
+        Salt (str): The salt value.
+        Time_Cost (int): Used to derive scrypt's 'n' parameter (n = 2**Time_Cost).
+        Memory_Cost (int): Desired memory usage in KiB. Used here to compute 'r' so that:
+                           memory ≈ n * r * 128 bytes ≈ Memory_Cost * 1024.
+        Parallelism (int): scrypt's parallelization factor, 'p'.
+        hash_length (int): Desired length of the derived key in bytes.
+    
+    Returns:
+        str: Hexadecimal string representation of the hash.
+    """
+    # Convert password and salt to bytes.
+    password_bytes = password.encode('utf-8')
+    salt_bytes = Salt.encode('utf-8')
+    
+    # Map Time_Cost to n. (n must be a power of 2.)
+    n = 2 ** Time_Cost
+
+    # Compute r such that: n * r * 128 ≈ Memory_Cost * 1024.
+    # r = (Memory_Cost * 1024) / (n * 128) = (Memory_Cost * 8) / n.
+    r = max(1, int((Memory_Cost * 8) / n))
+    
+    # Parallelism maps directly.
+    p = Parallelism
+    
+    # Compute scrypt hash.
+    result_bytes = hashlib.scrypt(password_bytes, salt=salt_bytes, n=n, r=r, p=p, dklen=hash_length)
+    return result_bytes.hex()
+
+CHAR_SETS = [
+    # Set 1: Alphanumeric (62 characters)
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "abcdefghijklmnopqrstuvwxyz",
+    "0123456789",
+    "!@#$%^&*()_+-=",
+    "[]\\{}|;',./<>? "
+]
+
+def generate_password(enable_sets, hex_input):
+
+    # Validate inputs
+    if not isinstance(enable_sets, (list, tuple)) or len(enable_sets) != 5:
+        raise ValueError("enable_sets must be a list of 3 booleans")
+        
+    allowed_sets = [CHAR_SETS[i] for i, enabled in enumerate(enable_sets) if enabled]
+    
+    if not allowed_sets:
+        raise ValueError("At least one character set must be enabled")
+    
+    # Convert hex input to bytes
+    if isinstance(hex_input, str):
+        hex_str = hex_input.strip().lower()
+        if len(hex_str) % 2 != 0:
+            raise ValueError("Hex string must have even length")
+        try:
+            data = bytes.fromhex(hex_str)
+        except ValueError:
+            raise ValueError("Invalid hexadecimal characters in input")
+    elif isinstance(hex_input, bytes):
+        data = hex_input
+    else:
+        raise TypeError("hex_input must be string or bytes")
+
+    password = []
+    for i, byte in enumerate(data):
+        # Determine which character set to use
+        set_index = i % len(allowed_sets)
+        current_set = allowed_sets[set_index]
+        
+        # Calculate character index using modulo operation
+        char_index = byte % len(current_set)
+        password.append(current_set[char_index])
+    
+    return ''.join(password)
+
 
 class GlobalVars:
     username = StringProperty('')
