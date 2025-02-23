@@ -248,6 +248,7 @@ Builder.load_string('''
 
     BoxLayout:
         orientation: 'vertical'
+        padding: 50
         
         RecycleView:
             id: rv
@@ -259,6 +260,7 @@ Builder.load_string('''
                 orientation: 'vertical'
                 default_size: None, dp(50)
                 default_size_hint: 1, None
+                spacing: dp(10)
                 size_hint_y: None
                 height: self.minimum_height
         
@@ -267,13 +269,20 @@ Builder.load_string('''
             height: '40sp'
             spacing: 5
             
-            Button:
+            RoundedButton:
                 text: 'Add New Item'
+                pos_hint: {'x': 0, 'y':0.5}
                 on_press: root.manager.current = 'add_item'
+                radius: [2,]
             
-            Button:
+            RoundedButton:
                 text: 'Logout'
+                normal_color: (0.7, 0.2, 0, 1)
+                pressed_color: (0.4, 0.1, 0, 1)
+                pos_hint: {'x': 1, 'y':0.5}
                 on_press: app.logout()
+                radius: [2,]
+
 
 <ItemRow>:
     orientation: 'horizontal'
