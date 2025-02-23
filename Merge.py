@@ -7,32 +7,31 @@ from kivy.core.clipboard import Clipboard
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.vkeyboard import VKeyboard
-from kivy.uix.button import ButtonBehavior
+from kivy.uix.button import ButtonBehavior, Button
+from kivy.core.window import Window
+from kivy.properties import ColorProperty
 from kivy.uix.label import Label
 from kivy.metrics import dp
 # from argon2 import low_level, Type
 import base64
 import platform
 import hashlib
+from kivy.core.text import LabelBase
 
-
-
+LabelBase.register(name="Roboto", fn_regular="JetBrainsMono-Medium.ttf")
 
 Builder.load_string('''
-<RoundedButton@Button>:
-    background_normal: ''
-    background_color: (0.1, 0.5, 0.8, 1)
-    size_hint: None, None
-    size: dp(120), dp(40)
-    pos_hint: {'x': 0}
-
+                    
+<RoundedButton>:
+    background_color: 0, 0, 0, 0
+    background_normal: ""
     canvas.before:
         Color:
-            rgba: self.background_color
+            rgba: self.normal_color if self.state in ('normal', '') else self.pressed_color
         RoundedRectangle:
-            pos: self.pos
             size: self.size
-            radius: [22,]
+            pos: self.pos
+            radius: [20]
                     
 <ButtonLabel@ButtonBehavior+Label>:
     color: (0.1, 0.5, 0.8, 1)
@@ -69,7 +68,7 @@ Builder.load_string('''
             width: 1
                     
 <WelcomeScreen>:
-# White background
+    # White background
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1
@@ -77,7 +76,7 @@ Builder.load_string('''
             pos: self.pos
             size: self.size
 
-# Use AnchorLayout to center everything
+    # Use AnchorLayout to center everything
     AnchorLayout:
         anchor_x: 'center'
         anchor_y: 'top'
@@ -100,88 +99,67 @@ Builder.load_string('''
                 height: dp(40)
 
             # Row for User ID
-            # BoxLayout:
-            #     orientation: 'horizontal'
-            #     size_hint_y: None
-            #     height: dp(40)
-            #     spacing: 20
-
-            MyTextInput:
-                TextInput:
-                    id: username_input
-                    hint_text: 'User ID'
-                    password: False
-                    background_normal: ''
-                    background_active: ''
-                    background_color: 0, 0, 0, 0
-                    foreground_color: 0, 0, 0, 1
-                    hint_text_color: 0.6, 0.6, 0.6, 1
-                    size_hint_y: None
-                    height: dp(40)
-                    padding: [15, 10]
-                    size_hint: 1, 1
-                    font_size: '18sp'
-                    multiline: False
-                    on_focus: root.toggle_keyboard()
-
-            # Rename this button ID so it's not the same as the password toggle
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
                 height: dp(40)
-                spacing: 100
+                spacing: 20
 
-                Widget:
-                    size_hint_y: None
-                    # width: dp(0)  # Space between last checkbox and slider
+                MyTextInput:
+                    TextInput:
+                        id: username_input
+                        hint_text: 'User ID'
+                        password: False
+                        background_normal: ''
+                        background_active: ''
+                        background_color: 0, 0, 0, 0
+                        foreground_color: 0, 0, 0, 1
+                        hint_text_color: 0.6, 0.6, 0.6, 1
+                        size_hint_y: None
+                        height: dp(40)
+                        padding: [15, 10]
+                        size_hint: 1, 1
+                        font_size: '18sp'
+                        multiline: False
+                        on_focus: root.toggle_keyboard()
 
                 RoundedButton:
                     id: toggle_userid_btn
                     text: 'Hide User ID'
-                    # size_hint_x: 0.2
+                    size_hint_x: 0.22
                     on_press:
                         username_input.password = not username_input.password
                         self.text = 'Show User ID' if username_input.password else 'Hide User ID'
 
             # Row for Password
-            # BoxLayout:
-            #     orientation: 'horizontal'
-            #     size_hint_y: None
-            #     height: dp(40)
-            #     spacing: 20
-
-            MyTextInput:
-                TextInput:
-                    id: password_input
-                    hint_text: 'Password'
-                    password: True
-                    background_normal: ''
-                    background_active: ''
-                    background_color: 0, 0, 0, 0
-                    foreground_color: 0, 0, 0, 1
-                    hint_text_color: 0.6, 0.6, 0.6, 1
-                    size_hint_y: None
-                    height: dp(40)
-                    padding: [15, 10]
-                    size_hint: 1, 1
-                    font_size: '18sp'
-                    multiline: False
-                    on_focus: root.toggle_keyboard()
-
             BoxLayout:
                 orientation: 'horizontal'
                 size_hint_y: None
                 height: dp(40)
-                spacing: 100
+                spacing: 20
 
-                Widget:
-                    size_hint_y: None
-                    # height: dp(40)  # Space between last checkbox and slider
+                MyTextInput:
+                    TextInput:
+                        id: password_input
+                        hint_text: 'Password'
+                        password: True
+                        background_normal: ''
+                        background_active: ''
+                        background_color: 0, 0, 0, 0
+                        foreground_color: 0, 0, 0, 1
+                        hint_text_color: 0.6, 0.6, 0.6, 1
+                        size_hint_y: None
+                        height: dp(40)
+                        padding: [15, 10]
+                        size_hint: 1, 1
+                        font_size: '18sp'
+                        multiline: False
+                        on_focus: root.toggle_keyboard()
 
                 RoundedButton:
                     id: toggle_password_btn
                     text: 'Show password'
-                    # size_hint_x: 0.2
+                    size_hint_x: 0.22
                     on_press:
                         password_input.password = not password_input.password
                         self.text = 'Show password' if password_input.password else 'Hide password'
@@ -193,14 +171,16 @@ Builder.load_string('''
                 height: dp(40)
                 spacing: 100
 
-                Button:
+                RoundedButton:
                     text: 'Submit'
+                    size_hint_x: 0
                     on_press: root.check_password()
                     pos_hint: {'center_x': 0}
 
             Widget:
                 size_hint_y: None
                 height: dp(80)  # Space between last checkbox and slider
+
             # Link / Info
             ButtonLabel:
                 text: 'Click here to understand what is this User ID and password and how this app works'
@@ -311,20 +291,29 @@ Builder.load_string('''
         color: 0,0,0,1
         size_hint_x: 0.25
     
-    Button:
-        text: 'Play'
+    RoundedButton:
+        text: 'Generate'
+        normal_color: (0, 0.8, 0.4, 1)
+        pressed_color: (0, 0.6, 0.3, 1) 
         size_hint_x: 0.15
         on_press: app.play_item(root.index)
+        radius: [3]
         
-    Button:
+    RoundedButton:
         text: 'Edit'
+        normal_color: (0, 0.8, 0.8, 1)
+        pressed_color: (0, 0.4, 0.4, 1) 
         size_hint_x: 0.15
         on_press: app.edit_item(root.index)
+        radius: [3]
     
-    Button:
+    RoundedButton:
         text: 'Delete'
+        normal_color: (0.8, 0.3, 0, 1)
+        pressed_color: (0.4, 0.1, 0, 1)
         size_hint_x: 0.15
         on_press: app.delete_item(root.index)
+        radius: [3]
 
 <AddItemScreen>:
                     
@@ -386,9 +375,11 @@ Builder.load_string('''
 
         RoundedButton:
             id: toggle_password_btn
+            size_hint_x:0.22 
+            size_hint_y:0.4
             text: 'Show Password'
             pos_hint: {'center_x': 0.5}
-            size_hint_x: 0.2
+            radius : [20]
             on_press: 
                 email_input.password = not email_input.password
                 self.text = 'Show Password'
@@ -404,7 +395,7 @@ Builder.load_string('''
             on_press: root.manager.current = 'additional_info'
         
         Label:
-            text: 'Choose which characters do you want to include in your password:'
+            text: 'Choose which sets of characters do you want to include in your password:'
             color: 0,0,0,1
             height: dp(30)
             halign: 'center'
@@ -482,7 +473,7 @@ Builder.load_string('''
                     size_hint: None, None
                     size: dp(25), dp(25)
                 Label:
-                    text: 'Special characters: ! @ # $ % ^ & * ( ) _ + - = '
+                    text: '! @ # $ % ^ & * ( ) _ + - = '
                     color: 0,0,0,1
                     halign: 'left'
                     valign: 'middle'
@@ -497,7 +488,7 @@ Builder.load_string('''
                     size_hint: None, None
                     size: dp(25), dp(25)
                 Label:
-                    text: "Special characters(including space): [ ] \\ { } | ; ' , . / < > ?"
+                    text: "(including space) [ ] \\\ { } | ; ' , . / < > ?"
                     color: 0,0,0,1
                     halign: 'left'
                     valign: 'middle'
@@ -561,12 +552,12 @@ Builder.load_string('''
             height: dp(40)
             spacing: 100
 
-            Button:
+            RoundedButton:
                 pos_hint: {'x': 0}
                 text: 'Add Item'
                 on_press: root.add_item()
                         
-            Button:
+            RoundedButton:
                 text: 'Back'
                 size_hint_y: None
                 pos_hint: {'x': 1}
@@ -629,13 +620,15 @@ Builder.load_string('''
                 size_hint: 1, 1
                 font_size: '18sp'
                 multiline: False
-        
-        
+
+
         RoundedButton:
             id: toggle_password_btn
+            size_hint_x:0.22 
+            size_hint_y:0.4
             text: 'Show Password'
             pos_hint: {'center_x': 0.5}
-            size_hint_x: 0.2
+            radius : [20]
             on_press: 
                 email_input.password = not email_input.password
                 self.text = 'Show Password'
@@ -651,7 +644,7 @@ Builder.load_string('''
             on_press: root.manager.current = 'additional_info'
         
         Label:
-            text: 'Choose which characters do you want to include in your password:'
+            text: 'Choose which sets of characters do you want to include in your password:'
             color: 0,0,0,1
             height: dp(30)
             halign: 'center'
@@ -729,7 +722,7 @@ Builder.load_string('''
                     size_hint: None, None
                     size: dp(25), dp(25)
                 Label:
-                    text: 'Special characters: ! @ # $ % ^ & * ( ) _ + - = '
+                    text: '! @ # $ % ^ & * ( ) _ + - = '
                     color: 0,0,0,1
                     halign: 'left'
                     valign: 'middle'
@@ -744,7 +737,7 @@ Builder.load_string('''
                     size_hint: None, None
                     size: dp(25), dp(25)
                 Label:
-                    text: "Special characters(including space): [ ] \\ { } | ; ' , . / < > ?"
+                    text: "(including space) [ ] \\\ { } | ; ' , . / < > ?"
                     color: 0,0,0,1
                     halign: 'left'
                     valign: 'middle'
@@ -808,12 +801,12 @@ Builder.load_string('''
             height: dp(40)
             spacing: 100
 
-            Button:
+            RoundedButton:
                 pos_hint: {'x': 0}
                 text: 'Save Changes'
                 on_press: root.save_item()
                         
-            Button:
+            RoundedButton:
                 text: 'Back'
                 size_hint_y: None
                 pos_hint: {'x': 1}
@@ -821,30 +814,32 @@ Builder.load_string('''
                 on_press: root.manager.current = 'list'
 
 <AdditionalInfoScreen>:
-                    
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1  # White background
         Rectangle:
             pos: self.pos
             size: self.size
-    
-                    
+
     ScrollView:
         size_hint: (1, 1)
-        do_scroll_x: False   # Typically we only want vertical scroll
+        do_scroll_x: False
         do_scroll_y: True
-                    
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 20
-            spacing: 10
-            
+        bar_width: dp(10)  # Makes scrollbar more visible
+        
+        GridLayout:
+            cols: 1
+            size_hint_y: None  # Critical for scrolling
+            height: self.minimum_height  # Expands to contain children
+            padding: dp(20)
+            spacing: dp(10)
 
             Label:
                 text: 'Additional Information'
                 font_size: '20sp'
-                
+                size_hint_y: None
+                height: self.texture_size[1]
+
             Label:
                 text: ("App/Website name:\\nEnter the App or Website name that you want the password for, this can be anything as long as you remember it. It is case sensitive so make sure you don't mistype any characters. If you have multiple account on same website/App you can generate unique password seperately for all of those just make sure you either give them unique 'App/Website name' or Unique 'App/Website password'.\\n Here are some example about how you can you can manage multiple accounts of same app/website:\\n Lets say you have two accounts on Google, User1 and User2. To get passwords for each account you can type 'google-user1' and this will generate password for user1. You can make any combination that easy to remember for you like- google1,user1-google, googleuser1 etc. You can set same password in 'App/website password' for all accounts, just make sure you remember it or you leave password empty.\\n\\nApp/website password:\\nThis field is optional as the whole purpose of KeyForge is that you don't have to remember passwords for all apps but this option is provided if you want to add more security. Also, this option can be used to add uniqueness to your generated passwords.\\nFor example: if your somehow your login User ID & password is same as someone else or if they get leaked the App/website password can still protect your passwords because it makes your password unique. Also you can have same App/Website name and different App/Website passwords which will generate different password that you can use for different accounts on same App/Website, like:\\nApp/Website: Google\\nApp/Website password: google-user1\\n this will give unique password for user1 on google\\n\\nChoosing which characters to include in your generated password:\\nBy default all 5 options(5 character sets) are selected but you can unselect the options or edit them later. Before generating any password for any App/Website check what kind of characters do they accept and according to their rules you can choose in KeyForge which characters you want in your generate password/key.\\n\\nPassword Length:By default length of password is set to 32 characters but you can choose between 4 options: 16, 32, 64, 128. Before generating any password for any App/Website check what is the maximum length of passwords do they accept & according to their rules you can set the length of your generate password/key.\\n Remember that longer passwords with more variety of character sets are harder to crack hence more safer.")      
                 color: 0,0,0,1
@@ -856,14 +851,13 @@ Builder.load_string('''
                 size_hint_y: None
                 height: self.texture_size[1]
             
-            Button:
+            RoundedButton:
                 text: 'Back'
                 size_hint_y: None
                 height: '40sp'
                 on_press: root.manager.current = 'add_item'
-
-<ResultScreen>:
                     
+<ResultScreen>:
     canvas.before:
         Color:
             rgba: 1, 1, 1, 1  # White background
@@ -871,67 +865,80 @@ Builder.load_string('''
             pos: self.pos
             size: self.size
 
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 20
-        spacing: 10
-                    
-        Label:
-            id: result_message
-            text: 'Generating password....'
-            color: 0,0,0,1
-            font_size: '20sp'
-                # --- Key wrapping properties ---
-            text_size: self.width, None
-            size_hint_y: None
-            height: self.texture_size[1]
-                    
-        MyTextInput:                
-            TextInput:
-                id: result_input
-                text: ''
-                password: True
-                readonly: True
-                multiline: False
-                size_hint_y: None
-                height: '40sp'
-                background_normal: ''
-                background_active: ''
-                background_color: 0, 0, 0, 0
-                foreground_color: 0, 0, 0, 1
-                hint_text_color: 0.6, 0.6, 0.6, 1
-                size_hint_y: None
-                height: dp(40)
-                padding: [15, 10]
-                size_hint: 1, 1
-                font_size: '18sp'
-                multiline: False
-                    
+    AnchorLayout:
+        anchor_x: 'center'
+        anchor_y: 'top'
+
         BoxLayout:
-            orientation: 'horizontal'
+            orientation: 'vertical'
             padding: 20
+            # Lower or remove the spacing here:
             spacing: 10
-            
+
+            Label:
+                id: result_message
+                text: 'Generating password....'
+                halign: 'center'
+                color: 0,0,0,1
+                font_size: '20sp'
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
+
+            MyTextInput:                
+                TextInput:
+                    id: result_input
+                    text: ''
+                    password: True
+                    readonly: True
+                    multiline: False
+                    size_hint_y: None
+                    height: '40sp'
+                    background_normal: ''
+                    background_active: ''
+                    background_color: 0, 0, 0, 0
+                    foreground_color: 0, 0, 0, 1
+                    hint_text_color: 0.6, 0.6, 0.6, 1
+                    size_hint_y: None
+                    height: dp(40)
+                    padding: [15, 10]
+                    size_hint: 1, 1
+                    font_size: '18sp'
+                    multiline: False
+
+            # Horizontal box with the two buttons
+            BoxLayout:
+                orientation: 'horizontal'
+                # Remove or reduce padding here to remove extra space
+                # e.g. keep horizontal padding but remove top/bottom:
+                padding: [20, 0, 20, 0]
+                spacing: 100
+
+                RoundedButton:
+                    id: toggle_result_password_btn
+                    text: 'Show Password'
+                    size_hint_y: None
+                    size_hint_x: 0.2
+                    height: '40sp'
+                    on_press:
+                        result_input.password = not result_input.password
+                        self.text = 'Show Password'
+
+                RoundedButton:
+                    text: 'Copy to Clipboard'
+                    normal_color: (0.8, 0.3, 0, 1)
+                    pressed_color: (0.4, 0.1, 0, 1)
+                    size_hint_y: None
+                    size_hint_x: 0.2
+                    height: '40sp'
+                    on_press: root.copy_to_clipboard()
+
             RoundedButton:
-                id: toggle_result_password_btn
-                text: 'Show Password'
-                # size_hint_x: 0.2
-                on_press: 
-                    result_input.password = not result_input.password
-                    self.text = 'Show Password'
-                        
-            RoundedButton:
-                text: 'Copy to Clipboard'
+                text: 'Back to List'
+                pos_hint: {'y': 0.1}
                 size_hint_y: None
                 height: '40sp'
-                on_press: root.copy_to_clipboard()
-        
-        Button:
-            text: 'Back to List'
-            pos_hint: {'y': 0.1}
-            size_hint_y: None
-            height: '40sp'
-            on_press: root.manager.current = 'list'
+                on_press: root.manager.current = 'list'
 ''')
 
 
@@ -964,7 +971,6 @@ def Hash(password, Salt, Time_Cost, Memory_Cost, Parallelism, hash_length):
     
     # Parallelism maps directly.
     p = Parallelism
-    
     # Compute scrypt hash.
     result_bytes = hashlib.scrypt(password_bytes, salt=salt_bytes, n=n, r=r, p=p, dklen=hash_length)
     return result_bytes.hex()
@@ -1105,6 +1111,10 @@ class ButtonLabel(ButtonBehavior,Label):
 class LoginInfoScreen(Screen):
     pass
 
+class RoundedButton(Button):
+    normal_color = ColorProperty([0.2, 0.7, 1, 1])  # Default blue
+    pressed_color = ColorProperty([0, 0.4, 0.8, 1])  # Darker blue
+
 class ListScreen(Screen):
     def on_enter(self):
         self.ids.rv.data = [
@@ -1237,7 +1247,7 @@ class ResultScreen(Screen):
         except Exception as e:
             print(f"Error clearing clipboard: {e}")
         result_screen = self.manager.get_screen('result')
-        result_screen.ids.result_message.text = f"Copied password is deleted & Clipboard cleared"
+        result_screen.ids.result_message.text = f"Clipboard cleared & copied password is deleted "
         print("Clipboard content erased after 10 seconds")
 
 class ItemRow(RecycleDataViewBehavior, BoxLayout):
@@ -1251,7 +1261,7 @@ class ItemRow(RecycleDataViewBehavior, BoxLayout):
         self.email = data.get('email', '')
         return super().refresh_view_attrs(rv, index, data)
 
-class InventoryApp(App):
+class KeyForge(App):
     items = ListProperty()
 
     def build(self):
@@ -1304,11 +1314,11 @@ class InventoryApp(App):
                 App_password = Hash(App_password,tmp_salt,4,1024,1,64)
 
             
-            master_hash = Hash(GlobalVars.password,GlobalVars.username,10,10240,1,64)
+            master_hash = Hash(GlobalVars.password,GlobalVars.username,15,10240,1,64)
 
-            App_hash = Hash(App_name,App_password,10,10240,1,64)
+            App_hash = Hash(App_name,App_password,14,10240,1,64)
 
-            app_master_hash = Hash(master_hash,App_hash,10,10240,1,hash_len)
+            app_master_hash = Hash(master_hash,App_hash,15,10240,1,hash_len)
 
             App_key= generate_password(character_set,app_master_hash)
 
@@ -1328,4 +1338,8 @@ class InventoryApp(App):
             
 
 if __name__ == '__main__':
-    InventoryApp().run()
+    info = platform.uname()   
+    if (info.system != 'ios') and (info.system != 'android'):
+        Window.size = (800, 750)
+
+    KeyForge().run()
