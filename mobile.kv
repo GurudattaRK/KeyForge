@@ -10,7 +10,24 @@
             size: self.size
             pos: self.pos
             radius: [20]
-                    
+
+<ImageButton@Button>:
+    id: toggle_icon_btn
+    text: 'Hide'
+    background_color: 0,0,0,0
+    size_hint_x: 0.1
+
+    on_press:
+        username_input.password = not username_input.password
+        toggle_icon.source = 'hide.png' if toggle_icon.source == 'show.png' else 'show.png'
+
+    Image:
+        size: dp(35),dp(35)
+        center_x: self.parent.center_x
+        center_y: self.parent.center_y
+        id: toggle_icon
+        source: 'show.png'
+
 <ButtonLabel@ButtonBehavior+Label>:
     color: (0.1, 0.5, 0.8, 1)
     underline: True
@@ -19,7 +36,7 @@
     size: self.texture_size
     halign: 'center'
 
-    text_size: 300, None
+    text_size: 600, None
     size_hint_y: None
     height: self.texture_size[1]
     canvas.before:
@@ -86,7 +103,7 @@
                 orientation: 'horizontal'
                 size_hint_y: None
                 height: dp(40)
-                spacing: 20
+                spacing: 10
 
                 MyTextInput:
                     TextInput:
@@ -106,13 +123,30 @@
                         multiline: False
                         on_focus: root.toggle_keyboard()
 
-                RoundedButton:
+                # RoundedButton:
+                #     id: toggle_userid_btn
+                #     text: 'Hide'
+                #     size_hint_x: 0.22
+                #     on_press:
+                #         username_input.password = not username_input.password
+                #         self.text = 'Show' if username_input.password else 'Hide'
+
+                Button:
                     id: toggle_userid_btn
                     text: 'Hide'
-                    size_hint_x: 0.22
+                    background_color: 0,0,0,0
+                    size_hint_x: 0.1
+
                     on_press:
                         username_input.password = not username_input.password
-                        self.text = 'Show' if username_input.password else 'Hide'
+                        toggle_userid_icon.source = 'hide.png' if toggle_userid_icon.source == 'show.png' else 'show.png'
+
+                    Image:
+                        size: dp(35),dp(35)
+                        center_x: self.parent.center_x
+                        center_y: self.parent.center_y
+                        id: toggle_userid_icon
+                        source: 'show.png'
 
             # Row for Password
             BoxLayout:
@@ -139,14 +173,23 @@
                         multiline: False
                         on_focus: root.toggle_keyboard()
 
-                RoundedButton:
+
+                Button:
                     id: toggle_password_btn
-                    text: 'Show'
-                    size_hint_x: 0.22
-                    pos_hint: {'center_x': 0}
+                    text: 'Hide'
+                    background_color: 0,0,0,0
+                    size_hint_x: 0.1
+
                     on_press:
                         password_input.password = not password_input.password
-                        self.text = 'Show' if password_input.password else 'Hide'
+                        toggle_password_icon.source = 'show.png' if toggle_password_icon.source == 'hide.png' else 'hide.png'
+
+                    Image:
+                        size: dp(35),dp(35)
+                        center_x: self.parent.center_x
+                        center_y: self.parent.center_y
+                        id: toggle_password_icon
+                        source: 'hide.png'
 
             # Row for the Submit button
             BoxLayout:
@@ -157,7 +200,7 @@
 
                 RoundedButton:
                     text: 'Submit'
-                    size_hint_x: 0
+                    size_hint_x: 0.1
                     on_press: root.check_password()
                     pos_hint: {'center_x': 0}
 
@@ -288,7 +331,7 @@
         text: 'Generate'
         normal_color: (0, 0.8, 0.4, 1)
         pressed_color: (0, 0.6, 0.3, 1) 
-        size_hint_x: 0.15
+        size_hint_x: 0.22
         on_press: app.play_item(root.index)
         radius: [3]
         
@@ -373,17 +416,34 @@
                     multiline: False
 
 
-            RoundedButton:
+            # RoundedButton:
+            #     id: toggle_password_btn
+            #     size_hint_x: 0.22 
+            #     size_hint_y: 0.7
+            #     text: 'Show'
+            #     pos_hint: {'center_x': 0.5}
+            #     radius : [20]
+            #     on_press: 
+            #         app_password_input.password = not app_password_input.password
+            #         self.text = 'Show' if app_password_input.password else 'Hide'
+                
+            Button:
                 id: toggle_password_btn
-                size_hint_x: 0.22 
-                size_hint_y: 0.7
-                text: 'Show'
-                pos_hint: {'center_x': 0.5}
-                radius : [20]
-                on_press: 
+                text: 'Hide'
+                background_color: 0,0,0,0
+                size_hint_x: 0.1
+
+                on_press:
                     app_password_input.password = not app_password_input.password
-                    self.text = 'Show' if app_password_input.password else 'Hide'
-                    
+                    toggle_app_password_icon.source = 'show.png' if toggle_app_password_icon.source == 'hide.png' else 'hide.png'
+
+                Image:
+                    size: dp(35),dp(35)
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    id: toggle_app_password_icon
+                    source: 'hide.png'
+                
                     
         ButtonLabel:
             text: 'click here to know more about how to use all these options'
@@ -417,7 +477,7 @@
                 rows: 5
                 spacing: dp(10)
                 # The key: let the grid expand horizontally
-                size_hint: (0.8, None)
+                size_hint: (0.95, None)
                 height: self.minimum_height
 
                 # 1st row
@@ -628,16 +688,22 @@
                     multiline: False
 
 
-            RoundedButton:
+            Button:
                 id: toggle_password_btn
-                size_hint_x: 0.22 
-                size_hint_y: 0.7
-                text: 'Show'
-                pos_hint: {'center_x': 0.5}
-                radius : [20]
-                on_press: 
+                text: 'Hide'
+                background_color: 0,0,0,0
+                size_hint_x: 0.1
+
+                on_press:
                     app_password_input.password = not app_password_input.password
-                    self.text = 'Show' if app_password_input.password else 'Hide'
+                    toggle_app_password_icon.source = 'show.png' if toggle_app_password_icon.source == 'hide.png' else 'hide.png'
+
+                Image:
+                    size: dp(35),dp(35)
+                    center_x: self.parent.center_x
+                    center_y: self.parent.center_y
+                    id: toggle_app_password_icon
+                    source: 'hide.png'
                     
                     
         ButtonLabel:

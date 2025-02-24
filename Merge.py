@@ -19,21 +19,24 @@ import hashlib
 from kivy.core.text import LabelBase
 from kivy.config import Config
 
-Config.set('graphics', 'width', '450')
-Config.set('graphics', 'height', '800')
-Config.set('graphics', 'resizable', '0')
+# Config.set('graphics', 'width', '450')
+# Config.set('graphics', 'height', '800')
+# Config.set('graphics', 'resizable', '0')
 
 LabelBase.register(name="Roboto", fn_regular="JetBrainsMono-Medium.ttf")
 
 info = platform.uname()   
 OS = str(info.system).lower()
+sys=str(platform.system()).lower()
 
 if (OS == 'windows') or (OS == 'linux') or (OS == 'macos') or (OS == 'osx'):
     print('Desktop:'+OS)
+    print('\nNigger42069:'+sys)
     # Builder.load_file('test.kv')
     Builder.load_file('mobile.kv')
     # Builder.load_file('desktop.kv')
 else:
+    print('\nNigger42069:'+sys)
     print('Mobile:'+OS)
     Builder.load_file('mobile.kv')
 
@@ -138,6 +141,9 @@ class WelcomeScreen(Screen):
             GlobalVars.username = Hash(GlobalVars.username,"H4!?|](hb)",4,8,1,16)
             print(f"\nLogin:\nname:{GlobalVars.username}\npassword:{GlobalVars.password}")
 
+    # def toggle_show(self):
+    #     self.ids.toggle_icon
+    # def toggle_hide(self):
 
     
     def toggle_keyboard(self):
@@ -274,6 +280,7 @@ class EditItemScreen(Screen):
             # Set checkbox states
             for i in range(5):
                 self.ids[f'check{i+1}'].active = item.get('checks', [True, True, True, True, True])[i]
+
 
             self.slider_value = item.get('slider_value', 2)
     
