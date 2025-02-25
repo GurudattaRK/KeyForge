@@ -415,17 +415,6 @@
                     font_size: '18sp'
                     multiline: False
 
-
-            # RoundedButton:
-            #     id: toggle_password_btn
-            #     size_hint_x: 0.22 
-            #     size_hint_y: 0.7
-            #     text: 'Show'
-            #     pos_hint: {'center_x': 0.5}
-            #     radius : [20]
-            #     on_press: 
-            #         app_password_input.password = not app_password_input.password
-            #         self.text = 'Show' if app_password_input.password else 'Hide'
                 
             Button:
                 id: toggle_password_btn
@@ -904,7 +893,7 @@
             size_hint_y: None  # Critical for scrolling
             height: self.minimum_height  # Expands to contain children
             padding: dp(20)
-            spacing: dp(10)
+            spacing: dp(12)
 
             Label:
                 text: 'Additional Information'
@@ -932,20 +921,28 @@
 <ResultScreen>:
     canvas.before:
         Color:
-            rgba: 1, 1, 1, 1  # White background
+            rgba: 1, 1, 1, 1
         Rectangle:
             pos: self.pos
             size: self.size
 
+    Image:
+        source:'hand_key.png'
+        keep_ratio: 'True'
+        size_hint: 0.4,0.4
+        pos_hint: {'center_x': 0.5, "center_y": 0.8}
+
     AnchorLayout:
         anchor_x: 'center'
-        anchor_y: 'top'
+        anchor_y: 'center'
 
         BoxLayout:
             orientation: 'vertical'
-            padding: 20
-            # Lower or remove the spacing here:
-            spacing: 10
+            size_hint: 1, None
+            height: self.minimum_height
+            padding: [20, 40]
+            spacing: 20
+
 
             Label:
                 id: result_message
@@ -971,43 +968,37 @@
                     background_color: 0, 0, 0, 0
                     foreground_color: 0, 0, 0, 1
                     hint_text_color: 0.6, 0.6, 0.6, 1
-                    size_hint_y: None
-                    height: dp(40)
                     padding: [15, 10]
-                    size_hint: 1, 1
                     font_size: '18sp'
-                    multiline: False
 
-            # Horizontal box with the two buttons
+            Widget:
+                height: dp(15)
+
             BoxLayout:
                 orientation: 'horizontal'
-                # Remove or reduce padding here to remove extra space
-                # e.g. keep horizontal padding but remove top/bottom:
-                padding: [20, 0, 20, 0]
-                spacing: 100
+                size_hint_y: None
+                height: '40sp'
+                spacing: 20
+                padding: [0, 5]
 
                 RoundedButton:
                     id: toggle_result_password_btn
                     text: 'Show Password'
-                    size_hint_y: None
-                    size_hint_x: 0.2
-                    height: '40sp'
+                    size_hint: 0.5, 1.1
                     on_press:
                         result_input.password = not result_input.password
-                        self.text = 'Show Password'
+                        self.text = 'Hide Password' if result_input.password else 'Show Password'
 
                 RoundedButton:
                     text: 'Copy to Clipboard'
                     normal_color: (0.8, 0.3, 0, 1)
                     pressed_color: (0.4, 0.1, 0, 1)
-                    size_hint_y: None
-                    size_hint_x: 0.2
-                    height: '40sp'
+                    size_hint: 0.5, 1.1
                     on_press: root.copy_to_clipboard()
+
 
             RoundedButton:
                 text: 'Back to List'
-                pos_hint: {'y': 0.1}
                 size_hint_y: None
                 height: '40sp'
                 on_press: root.manager.current = 'list'
