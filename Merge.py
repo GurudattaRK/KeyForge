@@ -147,11 +147,14 @@ class WelcomeScreen(Screen):
 
     
     def toggle_keyboard(self):
+
         if self.keyboard:
+            self.ids.intro_image.opacity = 1
             self.remove_widget(self.keyboard)
             self.keyboard = None
             self.ids.keyboard_placeholder.height = 0
         else:
+            self.ids.intro_image.opacity = 0
             self.keyboard = VKeyboard(
                 size_hint_y=None,
                 height=dp(300),
@@ -409,7 +412,7 @@ class KeyForge(App):
             App_password = item.get('email', '')
             character_set = item['checks']
             w = item['slider_value']
-            hash_len = (2**w)*8
+            hash_len = (2**w)*4
 
             if len(App_password)< 16:
                 tmp_salt = "HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5HardC0d3d 541ts5"
@@ -429,7 +432,9 @@ class KeyForge(App):
 
             result_screen.ids.result_input.text = App_key
             
-            result_screen.ids.result_message.text = f"Password generated for {item['name']}"
+            result_screen.ids.result_message.text = f"\nPassword generated for {item['name']}"
+            result_screen.ids.result_image_message.text = "Here's your key:\n"
+            result_screen.ids.result_image.opacity = 1
 
     def edit_item(self, index):
         if 0 <= index < len(self.items):

@@ -36,7 +36,7 @@
     size: self.texture_size
     halign: 'center'
 
-    text_size: 600, None
+    text_size: 900, None
     size_hint_y: None
     height: self.texture_size[1]
     canvas.before:
@@ -72,6 +72,7 @@
             size: self.size
 
     # Use AnchorLayout to center everything
+    
 
     AnchorLayout:
         anchor_x: 'center'
@@ -81,22 +82,37 @@
 
         # This BoxLayout is your centered content
         BoxLayout:
+            
             orientation: 'vertical'
             spacing: dp(20)
             padding: [dp(20), dp(20)]
             # size_hint: 0.9, None
             pos_hint: {'center_x': 0.5}
 
-            # height: self.minimum_height
+            Image:
+                id: intro_image
+                source:'digital_key.png'
+                keep_ratio: 'True'
+                size_hint: 0.6,0.6
+                pos_hint: {'center_x': 0.5, "center_y": 0.75}
+                opacity: 1
 
             # A welcome label at the top
             Label:
-                text: 'Welcome!'
+                text: 'Manage all your keys anywhere & anytime'
                 font_size: '24sp'
                 color: 0, 0, 0, 1
                 halign: 'center'
                 size_hint_y: None
+
+                text_size: self.width, None
+                size_hint_y: None
+                height: self.texture_size[1]
                 height: dp(40)
+
+            Widget:
+                size_hint_y: None
+                height: dp(25)
 
             # Row for User ID
             BoxLayout:
@@ -273,6 +289,13 @@
             pos: self.pos
             size: self.size
 
+    Image:
+        source:'key_holder.png'
+        keep_ratio: 'True'
+        size_hint: 0.8,0.8
+        pos_hint: {'center_x': 0.55, "center_y": 0.5}
+        opacity: 0.5
+
     BoxLayout:
         orientation: 'vertical'
         padding: 10
@@ -297,7 +320,7 @@
             spacing: 5
             
             RoundedButton:
-                text: 'Add New Item'
+                text: 'Add new password'
                 pos_hint: {'x': 0, 'y':0.5}
                 on_press: root.manager.current = 'add_item'
                 radius: [2,]
@@ -366,7 +389,7 @@
         spacing: 5
         
         Label:
-            text: 'Add New Item'
+            text: 'Add new password'
             color: 0,0,0,1
             font_size: '20sp'
                     
@@ -567,7 +590,7 @@
             Slider:
                 id: slider
                 min: 1
-                max: 4
+                max: 5
                 step: 1
                 value: root.slider_value  # Two-way binding
                 on_value: root.slider_value = int(self.value)  # Update property
@@ -585,7 +608,7 @@
                         size: self.value_pos[0] - self.x, dp(4)
 
         Label:
-            text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+            text: f'Password Length: {2**(int(root.slider_value))*(4)} characters'
             color: 0,0,0,1
             size_hint_y: None
             height: dp(20)
@@ -603,7 +626,7 @@
 
             RoundedButton:
                 pos_hint: {'x': 0}
-                text: 'Add Item'
+                text: 'Add new password'
                 on_press: root.add_item()
                         
             RoundedButton:
@@ -628,9 +651,10 @@
         spacing: 5
         
         Label:
-            text: 'Add New Item'
+            text: 'Edit password'
             color: 0,0,0,1
             font_size: '20sp'
+                    
 
         MyTextInput:                
             TextInput:
@@ -676,7 +700,7 @@
                     font_size: '18sp'
                     multiline: False
 
-
+                
             Button:
                 id: toggle_password_btn
                 text: 'Hide'
@@ -693,7 +717,7 @@
                     center_y: self.parent.center_y
                     id: toggle_app_password_icon
                     source: 'hide.png'
-                    
+                
                     
         ButtonLabel:
             text: 'click here to know more about how to use all these options'
@@ -727,7 +751,7 @@
                 rows: 5
                 spacing: dp(10)
                 # The key: let the grid expand horizontally
-                size_hint: (0.8, None)
+                size_hint: (0.95, None)
                 height: self.minimum_height
 
                 # 1st row
@@ -828,7 +852,7 @@
             Slider:
                 id: slider
                 min: 1
-                max: 4
+                max: 5
                 step: 1
                 value: root.slider_value  # Two-way binding
                 on_value: root.slider_value = int(self.value)  # Update property
@@ -846,7 +870,7 @@
                         size: self.value_pos[0] - self.x, dp(4)
 
         Label:
-            text: f'Password Length: {2**(int(root.slider_value))*(8)}'
+            text: f'Password Length: {2**(int(root.slider_value))*(4)} characters'
             color: 0,0,0,1
             size_hint_y: None
             height: dp(20)
@@ -926,11 +950,24 @@
             pos: self.pos
             size: self.size
 
+    Label:
+        id: result_image_message
+        text: ""
+        halign: 'center'
+        color: 0,0,0,1
+        font_size: '20sp'
+        text_size: self.width, None
+        size_hint_y: None
+        pos_hint: {'center_x': 0.5, "center_y": 0.9}
+        height: self.texture_size[1]
+
     Image:
+        id: result_image
         source:'hand_key.png'
         keep_ratio: 'True'
         size_hint: 0.4,0.4
-        pos_hint: {'center_x': 0.5, "center_y": 0.8}
+        pos_hint: {'center_x': 0.5, "center_y": 0.78}
+        opacity: 0
 
     AnchorLayout:
         anchor_x: 'center'
@@ -990,7 +1027,7 @@
                         self.text = 'Hide Password' if result_input.password else 'Show Password'
 
                 RoundedButton:
-                    text: 'Copy to Clipboard'
+                    text: 'Copy Password'
                     normal_color: (0.8, 0.3, 0, 1)
                     pressed_color: (0.4, 0.1, 0, 1)
                     size_hint: 0.5, 1.1
